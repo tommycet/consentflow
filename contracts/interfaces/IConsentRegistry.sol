@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+/// @title IConsentRegistry
+/// @notice Participant-owned consent and access-request state machine.
+/// @dev Implementations must keep revocation terminal and expose only opaque hashes.
+interface IConsentRegistry {
+    enum ConsentStatus {
+        NONE,
+        ACTIVE,
+        REVOKED
+    }
+
+    enum RequestStatus {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
+
+    enum RejectionCode {
+        NONE,
+        CVI_REVOKED,
+        CVA_REVOKED,
+        CVI_UNKNOWN,
+        CVA_UNKNOWN,
+        EXPIRED,
+        PURPOSE_MISMATCH,
+        STUDY_MISMATCH,
+        POLICY_UNSUPPORTED,
+        ALREADY_SETTLED
+    }
+
+    struct Consent {
+        uint256 consentId;
+        address participant;
+        bytes32 cviAttestationHash;
+        uint256 receiptId;
+        bytes32 studyId;
+        bytes32 purposeHash;
+        bytes32 policyVersion;
+        uint64 createdAt;
+        uint64 expiresAt;
+        uint64 revokedAt;
+        ConsentStatus status;
+    }
+
+    struct AccessRequest {
+        uint256 requestId;
+        uint256 consentId;
+        uint256 receiptId;
+        address researcher;
+        bytes32 studyId;
+        bytes32 purposeHash;
+        uint64 queuedAt;
+        uint64 expiresAt;
+        uint256 compensation;
+        RequestStatus status;
+        RejectionCode rejectionCode;
+    }
+
+    event ConsentCreated(
+        uint256 indexed consentId,
+        address indexed participant,
+        bytes32 indexed studyId,
+        bytes32 cviAttestationHash,
+        uint256 receiptId,
+        bytes32 purposeHash,
+        bytes32 policyVersion,
+        uint64 expiresAt
+    );
+    event ConsentRevoked(
+        uint256 indexed consentId,
+        address indexed participant,
+        uint64 revokedAt
+    );
+    event AccessRequested(
+        uint256 indexed requestId,
+        uint256 indexed consentId,
+        uint256 indexed receiptId,
+        address researcher,
+        uint256 compensation,
+        uint64 expiresAt
+    );
+    event AccessApproved(uint256 indexed requestId, address indexed researcher);
+    event AccessRejected(
+        uint256 indexed requestId,
+        RejectionCode indexed code
+    );
+
+    function createConsent(
+        bytes32 cviAttestationHash,
+        bytes32 studyId,
+        bytes32 purposeHash,
+        bytes32 policyVersion,
+        uint64 expiresAt,
+        bytes calldata receiptData
+    ) external returns (uint256 consentId, uint256 receiptId);
+
+    function revokeConsent(uint256 consentId) external;
+
+    function queueAccessRequest(
+        uint256 consentId,
+        bytes32 studyId,
+        bytes32 purposeHash,
+        uint64 expiresAt
+    ) external payable returns (uint256 requestId);
+
+    /// @notice Runs CCP atomically; approval may release `compensation`.
+    function settleAccessRequest(uint256 requestId) external;
+
+    /// @notice Records a failed CCP result without granting access or payment.
+    function rejectAccessRequest(
+        uint256 requestId,
+        RejectionCode code
+    ) external;
+
+    function getConsent(uint256 consentId) external view returns (Consent memory);
+
+    function getAccessRequest(
+        uint256 requestId
+    ) external view returns (AccessRequest memory);
+
+    function consentStatus(uint256 consentId) external view returns (ConsentStatus);
+}
