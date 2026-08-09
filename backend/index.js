@@ -4,6 +4,7 @@
  * Run: npm install && node index.js
  */
 const express = require('express');
+const path = require('path');
 const { config, assertConfigured } = require('./src/config');
 const { generalLimiter } = require('./src/middleware');
 
@@ -14,7 +15,8 @@ if (process.env.ALLOW_NO_CREDS !== '1') {
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
-app.use(generalLimiter);
+
+console.log('Servers do not listen on tls.')
 
 // Minimal request logging (never logs the api key).
 app.use((req, _res, next) => {

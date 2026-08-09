@@ -1,3 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0a0a0a;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ─── Glow Line ─── */
+.cf-glow-line {
+  position: relative;
+  overflow: hidden;
+}
+.cf-glow-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(7,211,186,0.6), transparent);
+  animation: glow-sweep 3s var(--ease-out) infinite;
+}
+.cf-glow-line.is-vertical::before {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(7,211,186,0.6), transparent);
+}
+
+@keyframes glow-sweep {
+  0%, 100% { opacity: 0.3; transform: translateX(-100%); }
+  50% { opacity: 1; transform: translateX(100%); }
+}
+
+/* ─── Glow Button ─── */
+.cf-glow-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  border: 1px solid rgba(7,211,186,0.4);
+  background: rgba(7,211,186,0.08);
+  color: #07d3ba;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  overflow: hidden;
+}
+.cf-glow-btn:hover {
+  background: rgba(7,211,186,0.15);
+  border-color: #07d3ba;
+  box-shadow: 0 0 20px rgba(7,211,186,0.2);
+}
+.cf-glow-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(7,211,186,0.1), transparent);
+  transition: left 0.5s var(--ease-out);
+}
+.cf-glow-btn:hover::after { left: 100%; }
+
+/* ─── Glow Border Card ─── */
+.cf-glow-card {
+  position: relative;
+  border: 1px solid rgba(30,45,61,1);
+  border-radius: 10px;
+  background: #111318;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-out);
+}
+.cf-glow-card:hover {
+  border-color: rgba(7,211,186,0.3);
+  background: #161a22;
+  box-shadow: 0 0 30px rgba(7,211,186,0.08);
+}
+
+/* ─── Typography Helpers ─── */
+.cf-display {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+/* ─── Section Spacing ─── */
+.cf-section {
+  padding: 5rem 0;
+}
+@media (min-width: 768px) {
+  .cf-section { padding: 7rem 0; }
+}
+
+/* ─── Container ─── */
+.cf-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+@media (min-width: 768px) {
+  .cf-container { padding: 0 2rem; }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2d3d;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #07d3ba;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(7,211,186,0.25);
+  color: #07d3ba;
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Focus Visible ─── */
+:focus-visible {
+  outline: 2px solid rgba(7,211,186,0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Abstract Background Pattern ─── */
+.cf-bg-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(7,211,186,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(149,143,220,0.03) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(7,211,186,0.02) 0%, transparent 60%);
+}
+
+/* ─── Noise Texture ─── */
+.cf-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
