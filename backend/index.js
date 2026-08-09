@@ -24,6 +24,7 @@ app.use((req, _res, next) => {
 app.use('/api/cvi', require('./routes/cvi'));
 app.use('/api/cva', require('./routes/cva'));
 app.use('/api/ccp', require('./routes/ccp'));
+app.use('/api/contract', require('./routes/contract'));
 
 // Health check — used by test-adapter and CI.
 app.get('/api/health', (_req, res) => {
