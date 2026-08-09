@@ -60,6 +60,7 @@ interface IConsentRegistry {
     event AccessApproved(uint256 indexed requestId, address indexed researcher);
     event AccessRejected(uint256 indexed requestId, RejectionCode indexed code);
     event BatchSettled(uint256[] requestIds, RequestStatus[] results);
+    event BatchConsentsCreated(uint256[] consentIds);
     event RequestExpired(uint256 indexed requestId);
     // Paused/Unpaused events inherited from OpenZeppelin Pausable — not redeclared here.
 
@@ -71,6 +72,15 @@ interface IConsentRegistry {
         uint64 expiresAt,
         bytes calldata receiptData
     ) external returns (uint256 consentId, uint256 receiptId);
+
+    function batchCreateConsent(
+        bytes32[] calldata cviHashes,
+        bytes32[] calldata studyIds,
+        bytes32[] calldata purposeHashes,
+        bytes32[] calldata policyVersions,
+        uint64[] calldata expiresAts,
+        bytes[] calldata receiptDatas
+    ) external returns (uint256[] memory consentIds);
 
     function revokeConsent(uint256 consentId) external;
 

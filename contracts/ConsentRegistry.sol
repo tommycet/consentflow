@@ -44,6 +44,7 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     error CompensationTransferFailed(uint256 requestId);
     error CompensationRefundFailed(uint256 requestId);
     error ArrayLengthMismatch();
+    error BatchTooLarge();
 
     constructor(address _contributionReceipt) Ownable(msg.sender) {
         if (_contributionReceipt == address(0)) revert InvalidAddress();
@@ -59,8 +60,57 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
         bytes32 purposeHash,
         bytes32 policyVersion,
         uint64 expiresAt,
-        bytes calldata /*receiptData*/
+        bytes calldata receiptData
     ) external override whenNotPaused returns (uint256 consentId, uint256 receiptId) {
+        (consentId, receiptId) = _createConsent(
+            cviAttestationHash,
+            studyId,
+            purposeHash,
+            policyVersion,
+            expiresAt,
+            receiptData
+        );
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function batchCreateConsent(
+        bytes32[] calldata cviHashes,
+        bytes32[] calldata studyIds,
+        bytes32[] calldata purposeHashes,
+        bytes32[] calldata policyVersions,
+        uint64[] calldata expiresAts,
+        bytes[] calldata receiptDatas
+    ) external override whenNotPaused returns (uint256[] memory consentIds) {
+        if (cviHashes.length != studyIds.length || cviHashes.length != purposeHashes.length ||
+            cviHashes.length != policyVersions.length || cviHashes.length != expiresAts.length ||
+            cviHashes.length != receiptDatas.length) {
+            revert ArrayLengthMismatch();
+        }
+        if (cviHashes.length > 50) revert BatchTooLarge();
+
+        consentIds = new uint256[](cviHashes.length);
+        for (uint256 i = 0; i < cviHashes.length; i++) {
+            (consentIds[i], ) = _createConsent(
+                cviHashes[i],
+                studyIds[i],
+                purposeHashes[i],
+                policyVersions[i],
+                expiresAts[i],
+                receiptDatas[i]
+            );
+        }
+
+        emit BatchConsentsCreated(consentIds);
+    }
+
+    function _createConsent(
+        bytes32 cviAttestationHash,
+        bytes32 studyId,
+        bytes32 purposeHash,
+        bytes32 policyVersion,
+        uint64 expiresAt,
+        bytes calldata /*receiptData*/
+    ) internal returns (uint256 consentId, uint256 receiptId) {
         if (expiresAt <= block.timestamp) revert InvalidExpiry();
 
         _consentIds += 1;
