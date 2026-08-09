@@ -1,0 +1,21 @@
+{
+  "name": "consentflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ConsentFlow — patient-controlled revocable clinical-trial consent on Monad, integrated with Cleanverse CVI/CVA/CCP.",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev:backend": "node backend/index.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "test:backend": "cd backend && npm test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.17.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -25,3 +25,22 @@ node_modules/
 .superpowers/
 .superpowers/
 .ecc
+
+# Build output
+frontend/dist/
+.vercel/
+
+# Demo video pipeline artifacts (large / regenerable)
+demo/*.cap/
+demo/cap-export*.mp4
+demo/consentflow-demo*.mp4
+demo/frames/
+demo/audio/
+demo/narration.m4a
+demo/concat.txt
+demo/__pycache__/
+
+# Foundry build output
+out/
+cache/
+broadcast/*/31337/
