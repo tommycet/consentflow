@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "ConsentFlow — patient-controlled revocable clinical-trial data consent rail. React + Vite + TS + Tailwind + ethers.js.",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
