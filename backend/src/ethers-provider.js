@@ -131,7 +131,7 @@ function getWallet() {
 function getConsentRegistry() {
   if (!_consentRegistry) {
     const address = requireEnv('CONSENT_REGISTRY_ADDRESS', CONSENT_REGISTRY_ADDRESS);
-    const abi = loadAbi('frontend/generated/abis/ConsentRegistry.json');
+    const abi = loadAbi('../frontend/generated/abis/ConsentRegistry.json');
     _consentRegistry = new ethers.Contract(address, abi, getWallet());
   }
   return _consentRegistry;
@@ -140,7 +140,7 @@ function getConsentRegistry() {
 function getContributionReceipt() {
   if (!_contributionReceipt) {
     const address = requireEnv('CONTRIBUTION_RECEIPT_ADDRESS', CONTRIBUTION_RECEIPT_ADDRESS);
-    const abi = loadAbi('frontend/generated/abis/ContributionReceipt.json');
+    const abi = loadAbi('../frontend/generated/abis/ContributionReceipt.json');
     _contributionReceipt = new ethers.Contract(address, abi, getWallet());
   }
   return _contributionReceipt;

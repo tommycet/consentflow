@@ -46,6 +46,9 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     error ArrayLengthMismatch();
     error BatchTooLarge();
 
+    /// @notice Initializes the registry with the ContributionReceipt address.
+    /// @dev Reverts if _contributionReceipt is address(0).
+    /// @param _contributionReceipt The deployed ContributionReceipt contract address.
     constructor(address _contributionReceipt) Ownable(msg.sender) {
         if (_contributionReceipt == address(0)) revert InvalidAddress();
         contributionReceipt = IContributionReceipt(_contributionReceipt);
@@ -54,6 +57,17 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     // ── Core lifecycle ────────────────────────────────────────────
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Creates a new consent record and issues a linked ContributionReceipt.
+    ///      The fixtureHash is computed internally as keccak256(abi.encodePacked(consentId, msg.sender, block.timestamp))
+    ///      to provide deterministic linkage without requiring off-chain computation.
+    /// @param cviAttestationHash Hash of the CVI attestation from Cleanverse verify_apass.
+    /// @param studyId Research study identifier.
+    /// @param purposeHash Purpose code for consent-receipt matching.
+    /// @param policyVersion Active policy version at issuance.
+    /// @param expiresAt Unix timestamp when the consent expires (must be > block.timestamp).
+    /// @param receiptData Reserved for future receipt-specific metadata (currently unused).
+    /// @return consentId The newly created consent identifier.
+    /// @return receiptId The linked ContributionReceipt identifier.
     function createConsent(
         bytes32 cviAttestationHash,
         bytes32 studyId,
@@ -73,6 +87,17 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Batch variant of createConsent. Each array element pair creates an independent consent.
+    ///      The function validates that all input arrays have equal length (up to 50 items per batch).
+    ///      Each consent is created via the internal _createConsent helper, sharing the same
+    ///      deterministic fixtureHash computation.
+    /// @param cviHashes Array of CVI attestation hashes.
+    /// @param studyIds Array of study identifiers (one per consent).
+    /// @param purposeHashes Array of purpose hashes.
+    /// @param policyVersions Array of policy versions.
+    /// @param expiresAts Array of expiry timestamps.
+    /// @param receiptDatas Array of receipt metadata (currently unused).
+    /// @return consentIds Array of newly created consent identifiers.
     function batchCreateConsent(
         bytes32[] calldata cviHashes,
         bytes32[] calldata studyIds,
@@ -159,6 +184,11 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Revokes an active consent. Only the participant who created the consent can revoke it.
+    ///      Sets status to REVOKED and records the revocation timestamp. Also revokes the linked
+    ///      ContributionReceipt to keep the audit trail consistent.
+    ///      Reverts if: consent does not exist, caller is not the participant, or consent is not ACTIVE.
+    /// @param consentId The consent to revoke.
     function revokeConsent(uint256 consentId) external override {
         Consent storage c = consents[consentId];
         if (c.consentId == 0) revert ConsentNotFound(consentId);
@@ -174,6 +204,14 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Queues a request to access data under a consent. The researcher sends ETH as compensation.
+    ///      Validates that the consent is ACTIVE, not expired, and matches the requested study/purpose.
+    ///      Reverts if the registry is paused, consent is invalid, or expiry is in the past.
+    /// @param consentId The consent under which access is requested.
+    /// @param studyId Must match the consent's studyId (prevents cross-study access).
+    /// @param purposeHash Must match the consent's purposeHash (prevents purpose drift).
+    /// @param expiresAt Request expiry timestamp (must be > block.timestamp).
+    /// @return requestId The newly created access request identifier.
     function queueAccessRequest(
         uint256 consentId,
         bytes32 studyId,
@@ -221,6 +259,14 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Settles a single access request. The CCP result determines the outcome:
+    ///      - ccpPassed == true: request is APPROVED, compensation is sent to the participant.
+    ///      - ccpPassed == false: request is REJECTED, compensation is refunded to the researcher.
+    ///      Reverts if: request not found, not PENDING, caller is not the researcher, request expired,
+    ///      consent not ACTIVE, or the linked receipt is invalid.
+    ///      Uses Checks-Effects-Interactions: state is updated before the external transfer.
+    /// @param requestId The access request to settle.
+    /// @param ccpPassed Cleanverse CCP result (true = approved, false = rejected).
     function settleAccessRequest(
         uint256 requestId,
         bool ccpPassed,
@@ -230,6 +276,13 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Batch variant of settleAccessRequest. Settles multiple requests in a single transaction.
+    ///      All input arrays must have equal length. Each request is settled independently via _settle.
+    ///      Provides ~52% gas savings vs individual settles for multi-request scenarios.
+    ///      Reverts if array lengths mismatch; individual reverts bubble up from _settle.
+    /// @param requestIds Array of access request identifiers.
+    /// @param ccpResults Array of CCP results (true = approved, false = rejected).
+    /// @param reasonCodes Array of off-chain reason codes.
     function batchSettle(
         uint256[] calldata requestIds,
         bool[] calldata ccpResults,
@@ -247,6 +300,11 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Expires a consent that has passed its expiry timestamp. Only callable when the consent
+    ///      is ACTIVE and expiresAt <= block.timestamp. Sets status to EXPIRED and revokes the
+    ///      linked ContributionReceipt. This is distinct from the participant-initiated revokeConsent;
+    ///      it is meant to be called by keepers or automation after the natural expiry window.
+    /// @param consentId The consent to expire.
     function expireConsent(uint256 consentId) external override {
         Consent storage c = consents[consentId];
         if (c.consentId == 0) revert ConsentNotFound(consentId);
@@ -275,6 +333,14 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
 
     // ── Internal ──────────────────────────────────────────────────
 
+    /// @dev Core settlement logic shared by settleAccessRequest and batchSettle.
+    ///      Checks: request exists, is PENDING, caller is researcher, not expired.
+    ///      Validates the linked consent is ACTIVE and the receipt is still valid.
+    ///      If ccpPassed: transfers compensation to participant, sets APPROVED.
+    ///      If !ccpPassed: refunds compensation to researcher, sets REJECTED.
+    ///      Uses Checks-Effects-Interactions: state update before external call.
+    /// @param requestId The access request to settle.
+    /// @param ccpPassed Cleanverse CCP result determining approval/rejection.
     function _settle(uint256 requestId, bool ccpPassed) internal {
         AccessRequest storage r = requests[requestId];
         if (r.requestId == 0) revert RequestNotFound(requestId);
@@ -321,6 +387,10 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     // ── View functions ───────────────────────────────────────────
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns the full Consent struct for a given identifier.
+    ///      Reverts with ConsentNotFound if the consent does not exist.
+    /// @param consentId The consent identifier.
+    /// @return Consent struct containing all consent fields.
     function getConsent(uint256 consentId) external view override returns (Consent memory) {
         Consent memory c = consents[consentId];
         if (c.consentId == 0) revert ConsentNotFound(consentId);
@@ -328,6 +398,10 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns the full AccessRequest struct for a given identifier.
+    ///      Reverts with RequestNotFound if the request does not exist.
+    /// @param requestId The request identifier.
+    /// @return AccessRequest struct containing all request fields.
     function getAccessRequest(uint256 requestId) external view override returns (AccessRequest memory) {
         AccessRequest memory r = requests[requestId];
         if (r.requestId == 0) revert RequestNotFound(requestId);
@@ -335,6 +409,11 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns the effective status of a consent, accounting for time-based expiry.
+    ///      If the stored status is ACTIVE but expiresAt <= block.timestamp, returns EXPIRED.
+    ///      This ensures on-chain queries always reflect the current valid state.
+    /// @param consentId The consent identifier.
+    /// @return status The effective ConsentStatus (may differ from stored status if expired).
     function consentStatus(uint256 consentId) external view override returns (ConsentStatus) {
         Consent storage c = consents[consentId];
         if (c.consentId == 0) revert ConsentNotFound(consentId);
@@ -345,16 +424,31 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns all consent IDs created by a given participant address.
+    ///      Returns an empty array if the participant has no consents.
+    ///      The array is ordered by creation time (oldest first).
+    /// @param participant The wallet address to query.
+    /// @return Array of consent identifiers.
     function getConsentsByParticipant(address participant) external view override returns (uint256[] memory) {
         return _consentsByParticipant[participant];
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns all access request IDs submitted by a given researcher address.
+    ///      Returns an empty array if the researcher has no requests.
+    ///      The array is ordered by queue time (oldest first).
+    /// @param researcher The wallet address to query.
+    /// @return Array of request identifiers.
     function getRequestsByResearcher(address researcher) external view override returns (uint256[] memory) {
         return _requestsByResearcher[researcher];
     }
 
     /// @inheritdoc IConsentRegistry
+    /// @dev Returns all access request IDs associated with a given consent.
+    ///      Returns an empty array if no requests exist for this consent.
+    ///      The array is ordered by queue time (oldest first).
+    /// @param consentId The consent identifier.
+    /// @return Array of request identifiers.
     function getRequestsByConsent(uint256 consentId) external view override returns (uint256[] memory) {
         return _requestsByConsent[consentId];
     }

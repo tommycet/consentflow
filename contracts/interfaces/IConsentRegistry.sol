@@ -3,38 +3,49 @@ pragma solidity ^0.8.24;
 
 /// @title IConsentRegistry
 /// @notice Participant-owned consent and access-request state machine.
+/// @dev Defines the core data structures (Consent, AccessRequest) and interface for the ConsentRegistry.
+///      All state transitions are validated on-chain. The real CCP enforcement is handled by the
+///      Cleanverse verify_apass API off-chain, which calls settleAccessRequest with the result.
 interface IConsentRegistry {
+    /// @notice Consent lifecycle states.
+    /// @dev NONE (0): default uninitialized state. ACTIVE (1): consent is valid. REVOKED (2): participant revoked. EXPIRED (3): time-based expiry.
     enum ConsentStatus { NONE, ACTIVE, REVOKED, EXPIRED }
+
+    /// @notice Access request lifecycle states.
+    /// @dev PENDING (0): queued, awaiting settlement. APPROVED (1): CCP passed, access granted. REJECTED (2): CCP failed, access denied. EXPIRED (3): request timed out.
     enum RequestStatus { PENDING, APPROVED, REJECTED, EXPIRED }
+
+    /// @notice Rejection classification codes.
+    /// @dev NONE (0): no rejection. CVI_REVOKED (1): CVI/attestation revoked. CVA_REVOKED (2): CVA receipt revoked. EXPIRED (3): time-based expiry. PURPOSE_MISMATCH (4): purpose hash changed. STUDY_MISMATCH (5): study ID changed. POLICY_UNSUPPORTED (6): policy version unsupported.
     enum RejectionCode { NONE, CVI_REVOKED, CVA_REVOKED, EXPIRED, PURPOSE_MISMATCH, STUDY_MISMATCH, POLICY_UNSUPPORTED }
 
     struct Consent {
-        uint256 consentId;
-        address participant;
-        bytes32 cviAttestationHash;
-        uint256 receiptId;
-        bytes32 studyId;
-        bytes32 purposeHash;
-        bytes32 policyVersion;
+        uint256 consentId;           /// @dev Unique consent identifier (auto-incrementing).
+        address participant;         /// @dev Wallet that owns this consent (immutable after creation).
+        bytes32 cviAttestationHash;  /// @dev Hash of the Cleanverse CVI attestation.
+        uint256 receiptId;           /// @dev Linked ContributionReceipt identifier.
+        bytes32 studyId;             /// @dev Research study identifier.
+        bytes32 purposeHash;         /// @dev Purpose code for consent-receipt matching.
+        bytes32 policyVersion;       /// @dev Active policy version at issuance.
         // ── Packed slot: createdAt(64) | expiresAt(64) | revokedAt(64) | status(8) = 200 bits ──
-        uint64 createdAt;
-        uint64 expiresAt;
-        uint64 revokedAt;
-        ConsentStatus status;
+        uint64 createdAt;            /// @dev Unix timestamp when the consent was created.
+        uint64 expiresAt;            /// @dev Unix timestamp after which the consent is invalid.
+        uint64 revokedAt;            /// @dev Unix timestamp when revoked (0 if not revoked).
+        ConsentStatus status;        /// @dev Current lifecycle status.
     }
 
     struct AccessRequest {
-        uint256 requestId;
-        uint256 consentId;
-        uint256 receiptId;
-        address researcher;
-        bytes32 studyId;
-        bytes32 purposeHash;
-        uint64 queuedAt;
-        uint64 expiresAt;
-        uint256 compensation;
-        RequestStatus status;
-        RejectionCode rejectionCode;
+        uint256 requestId;          /// @dev Unique request identifier (auto-incrementing).
+        uint256 consentId;          /// @dev Linked consent identifier.
+        uint256 receiptId;          /// @dev Linked ContributionReceipt identifier.
+        address researcher;         /// @dev Wallet that submitted the request.
+        bytes32 studyId;            /// @dev Research study identifier (must match consent).
+        bytes32 purposeHash;        /// @dev Purpose code (must match consent).
+        uint64 queuedAt;            /// @dev Unix timestamp when the request was queued.
+        uint64 expiresAt;            /// @dev Unix timestamp when the request expires.
+        uint256 compensation;       /// @dev ETH compensation escrowed with the request.
+        RequestStatus status;       /// @dev Current lifecycle status.
+        RejectionCode rejectionCode; /// @dev Reason code if rejected (NONE otherwise).
     }
 
     event ConsentCreated(
@@ -133,20 +144,39 @@ interface IConsentRegistry {
     function expireConsent(uint256 consentId) external;
 
     /// @notice Gets a consent record by ID.
+    /// @dev Reverts if consentId does not exist.
+    /// @param consentId The consent identifier.
+    /// @return consent The full Consent struct.
     function getConsent(uint256 consentId) external view returns (Consent memory);
 
     /// @notice Gets an access request record by ID.
+    /// @dev Reverts if requestId does not exist.
+    /// @param requestId The request identifier.
+    /// @return request The full AccessRequest struct.
     function getAccessRequest(uint256 requestId) external view returns (AccessRequest memory);
 
     /// @notice Gets the dynamic consent status (checks auto-expiry on-the-fly).
+    /// @dev Returns EXPIRED if status is ACTIVE but block.timestamp >= expiresAt.
+    ///      This prevents stale "ACTIVE" status from persisting after natural expiry.
+    /// @param consentId The consent identifier.
+    /// @return status The effective ConsentStatus.
     function consentStatus(uint256 consentId) external view returns (ConsentStatus);
 
     /// @notice Gets all consent IDs for a participant (O(1) index lookup).
+    /// @dev Returns an empty array if the participant has no consents.
+    /// @param participant The wallet address to query.
+    /// @return consentIds Array of consent identifiers (ordered by creation time).
     function getConsentsByParticipant(address participant) external view returns (uint256[] memory);
 
     /// @notice Gets all request IDs for a researcher (O(1) index lookup).
+    /// @dev Returns an empty array if the researcher has no requests.
+    /// @param researcher The wallet address to query.
+    /// @return requestIds Array of request identifiers (ordered by queue time).
     function getRequestsByResearcher(address researcher) external view returns (uint256[] memory);
 
     /// @notice Gets all request IDs for a consent (O(1) index lookup).
+    /// @dev Returns an empty array if no requests exist for this consent.
+    /// @param consentId The consent identifier.
+    /// @return requestIds Array of request identifiers (ordered by queue time).
     function getRequestsByConsent(uint256 consentId) external view returns (uint256[] memory);
 }
