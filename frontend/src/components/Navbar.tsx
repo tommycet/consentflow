@@ -4,6 +4,7 @@ export function Navbar() {
   const location = useLocation();
 
   const navItems = [
+    { path: '/', label: 'Overview', icon: '🏠' },
     { path: '/participant', label: 'Participant', icon: '👤' },
     { path: '/researcher', label: 'Researcher', icon: '🔬' },
     { path: '/audit', label: 'Audit', icon: '📋' },

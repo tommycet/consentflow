@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { Landing } from './pages/Landing';
 import { Participant } from './pages/Participant';
 import { Researcher } from './pages/Researcher';
 import { Audit } from './pages/Audit';
@@ -16,11 +17,11 @@ function App() {
       <main className="pt-20 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/participant" element={<Participant />} />
             <Route path="/researcher" element={<Researcher />} />
             <Route path="/audit" element={<Audit />} />
-            <Route path="/" element={<Navigate to="/participant" replace />} />
-            <Route path="*" element={<Navigate to="/participant" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </main>
