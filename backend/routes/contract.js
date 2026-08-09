@@ -14,6 +14,13 @@ const { config } = require('../src/config');
 const { ok, fail, normalizeAddress, wrap } = require('../src/handlers');
 const { getConsentRegistry, getContributionReceipt } = require('../src/ethers-provider');
 const { getEvents } = require('../src/event-indexer');
+const { writeLimiter } = require('../src/middleware');
+const {
+  validateAddress,
+  validateBytes32,
+  validateTimestamp,
+  validateConsentId,
+} = require('../src/validate');
 
 const router = Router();
 
@@ -33,10 +40,26 @@ const router = Router();
 // ---------------------------------------------------------------------------
 router.post(
   '/create-consent',
+  writeLimiter,
   wrap(async (req, res) => {
     const b = req.body || {};
-    const { valid, address, error } = normalizeAddress(b.participant);
+    const { valid, address, error } = validateAddress(b.participant);
     if (!valid) return fail(res, error || 'body.participant is required');
+
+    const cvi = validateBytes32(b.cviAttestationHash);
+    if (!cvi.valid) return fail(res, cvi.error);
+
+    const study = validateBytes32(b.studyId);
+    if (!study.valid) return fail(res, study.error);
+
+    const purpose = validateBytes32(b.purposeHash);
+    if (!purpose.valid) return fail(res, purpose.error);
+
+    const policy = validateBytes32(b.policyVersion);
+    if (!policy.valid) return fail(res, policy.error);
+
+    const ts = validateTimestamp(b.expiresAt, true);
+    if (!ts.valid) return fail(res, ts.error);
 
     const receipt = getContributionReceipt();
     const registry = getConsentRegistry();
@@ -95,14 +118,22 @@ router.post(
 // ---------------------------------------------------------------------------
 router.post(
   '/queue-request',
+  writeLimiter,
   wrap(async (req, res) => {
     const b = req.body || {};
-    if (b.consentId === undefined) return fail(res, 'body.consentId is required');
-    if (!b.studyId) return fail(res, 'body.studyId is required');
-    if (!b.purposeHash) return fail(res, 'body.purposeHash is required');
-    if (!b.expiresAt) return fail(res, 'body.expiresAt is required');
+    const cid = validateConsentId(b.consentId);
+    if (!cid.valid) return fail(res, cid.error);
 
-    const { valid: rValid, address: researcher, error: rError } = normalizeAddress(b.researcher);
+    const study = validateBytes32(b.studyId);
+    if (!study.valid) return fail(res, study.error);
+
+    const purpose = validateBytes32(b.purposeHash);
+    if (!purpose.valid) return fail(res, purpose.error);
+
+    const ts = validateTimestamp(b.expiresAt, true);
+    if (!ts.valid) return fail(res, ts.error);
+
+    const { valid: rValid, address: researcher, error: rError } = validateAddress(b.researcher);
     if (!rValid) return fail(res, rError || 'body.researcher is required');
 
     const registry = getConsentRegistry();
@@ -110,10 +141,10 @@ router.post(
     // queueAccessRequest is payable; pass 0 value unless overridden.
     const value = b.value || '0';
     const tx = await registry.queueAccessRequest(
-      BigInt(Math.floor(Number(b.consentId))),
-      b.studyId,
-      b.purposeHash,
-      BigInt(Math.floor(Number(b.expiresAt))),
+      BigInt(cid.value),
+      study.value,
+      purpose.value,
+      BigInt(ts.value),
       { value }
     );
     const receipt = await tx.wait();
@@ -146,13 +177,16 @@ router.post(
 // ---------------------------------------------------------------------------
 router.post(
   '/settle-request',
+  writeLimiter,
   wrap(async (req, res) => {
     const b = req.body || {};
-    if (b.requestId === undefined) return fail(res, 'body.requestId is required');
+    const rid = validateConsentId(b.requestId);
+    if (!rid.valid) return fail(res, rid.error);
+
     if (!b.wallet) return fail(res, 'body.wallet is required');
 
     // Step 1 — Cleanverse CCP check FIRST.
-    const { valid, address, error } = normalizeAddress(b.wallet);
+    const { valid, address, error } = validateAddress(b.wallet);
     if (!valid) return fail(res, error || 'invalid body.wallet');
 
     const atoken = b.atoken || config.defaultAtoken;
@@ -172,7 +206,7 @@ router.post(
     const reasonCode = b.reasonCode || '0x0000000000000000000000000000000000000000000000000000000000000000';
 
     const tx = await registry.settleAccessRequest(
-      BigInt(Math.floor(Number(b.requestId))),
+      BigInt(rid.value),
       ccpPassed,
       reasonCode
     );
@@ -193,7 +227,9 @@ router.post(
 router.get(
   '/consent/:id',
   wrap(async (req, res) => {
-    const id = BigInt(req.params.id);
+    const cid = validateConsentId(req.params.id);
+    if (!cid.valid) return fail(res, cid.error);
+    const id = BigInt(cid.value);
     const registry = getConsentRegistry();
     const consent = await registry.getConsent(id);
     return ok(res, {
@@ -218,7 +254,9 @@ router.get(
 router.get(
   '/request/:id',
   wrap(async (req, res) => {
-    const id = BigInt(req.params.id);
+    const rid = validateConsentId(req.params.id);
+    if (!rid.valid) return fail(res, rid.error);
+    const id = BigInt(rid.value);
     const registry = getConsentRegistry();
     const reqData = await registry.getAccessRequest(id);
     return ok(res, {

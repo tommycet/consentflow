@@ -23,7 +23,7 @@ let providerReady = false;
 // ---- event decoding ----
 const EVENT_FRAGMENTS = {
   ConsentCreated: {
-    args: ['consentId', 'participant', 'cviHash', 'receiptId', 'studyId', 'purposeHash', 'expiresAt'],
+    args: ['consentId', 'participant', 'studyId', 'cviAttestationHash', 'receiptId', 'purposeHash', 'policyVersion', 'expiresAt'],
   },
   ConsentRevoked: {
     args: ['consentId', 'participant', 'revokedAt'],
@@ -35,7 +35,7 @@ const EVENT_FRAGMENTS = {
     args: ['requestId', 'researcher'],
   },
   AccessRejected: {
-    args: ['requestId', 'reason'],
+    args: ['requestId', 'code'],
   },
 };
 

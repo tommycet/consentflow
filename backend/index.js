@@ -5,7 +5,7 @@
  */
 const express = require('express');
 const { config, assertConfigured } = require('./src/config');
-const rateLimit = require('express-rate-limit');
+const { generalLimiter } = require('./src/middleware');
 
 // Fail fast when credentials are missing (unless explicitly disabled).
 if (process.env.ALLOW_NO_CREDS !== '1') {
@@ -14,25 +14,6 @@ if (process.env.ALLOW_NO_CREDS !== '1') {
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
-
-// General rate limit: 100 requests per 15 minutes per IP.
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'too many requests, please try again later' },
-});
-
-// Write endpoints: 10 requests per minute per IP.
-const writeLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'write rate limit exceeded, please slow down' },
-});
-
 app.use(generalLimiter);
 
 // Minimal request logging (never logs the api key).

@@ -36,7 +36,7 @@ else
 fi
 
 step "3/10: Query CVI status for $WALLET"
-if resp=$(http GET "/api/cvi/query/$WALLET"); then
+if resp=$(http GET "/api/cvi/$WALLET/status"); then
   ok "CVI status retrieved"
   echo "$resp"
 else
@@ -54,7 +54,7 @@ else
 fi
 
 step "5/10: Freeze CVI"
-if resp=$(http POST /api/cvi/update-status "{\"wallet\":\"$WALLET\",\"status\":\"frozen\"}"); then
+if resp=$(http POST "/api/cvi/$WALLET/freeze" "{}"); then
   ok "CVI frozen"
   echo "$resp"
 else
@@ -70,7 +70,7 @@ else
 fi
 
 step "7/10: Unfreeze CVI"
-if resp=$(http POST /api/cvi/update-status "{\"wallet\":\"$WALLET\",\"status\":\"active\"}"); then
+if resp=$(http POST "/api/cvi/$WALLET/unfreeze" "{}"); then
   ok "CVI unfrozen"
   echo "$resp"
 else
@@ -98,13 +98,13 @@ run_onchain() {
   ok "Consent created: $cid"
   echo "$cid"
 
-  if ! http POST /api/contract/queue-request "{\"consentId\":\"$cid\",\"requester\":\"$WALLET\"}" >/dev/null; then
+  if ! http POST /api/contract/queue-request "{\"consentId\":\"$cid\",\"researcher\":\"$WALLET\",\"studyId\":\"Study-001\",\"purposeHash\":\"0x$(openssl rand -hex 32)\",\"expiresAt\":$(date -d '+30 days' +%s)}" >/dev/null; then
     warn "Queue request failed — contracts may not be deployed"
     return 1
   fi
   ok "Access request queued"
 
-  if ! http POST /api/contract/settle-request "{\"consentId\":\"$cid\"}" >/dev/null; then
+  if ! http POST /api/contract/settle-request "{\"requestId\":1,\"wallet\":\"$WALLET\"}" >/dev/null; then
     warn "Settle request failed — contracts may not be deployed"
     return 1
   fi
