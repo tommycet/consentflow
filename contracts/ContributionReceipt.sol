@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IContributionReceipt.sol";
 
 /// @title ContributionReceipt
 /// @notice Purpose-bound, wallet-locked CVA receipt.
-contract ContributionReceipt is IContributionReceipt {
+contract ContributionReceipt is IContributionReceipt, Ownable, ReentrancyGuard {
     uint256 public _receiptIds;
 
     address public consentRegistry;
@@ -19,6 +20,7 @@ contract ContributionReceipt is IContributionReceipt {
     error ReceiptNotFound(uint256 receiptId);
     error InvalidExpiry();
     error AlreadyRevoked(uint256 receiptId);
+    error AlreadyExpired(uint256 receiptId);
     error InvalidParticipant();
 
     modifier onlyRegistry() {
@@ -26,14 +28,14 @@ contract ContributionReceipt is IContributionReceipt {
         _;
     }
 
-    /// @dev Permits one-time binding. Production deploy can bind in constructor.
-    function setRegistry(address _registry) external {
+    /// @dev Permits one-time binding by owner. Production deploy can bind in constructor.
+    function setRegistry(address _registry) external onlyOwner {
         if (registrySet) revert RegistryAlreadySet();
         consentRegistry = _registry;
         registrySet = true;
     }
 
-    constructor(address _consentRegistry) {
+    constructor(address _consentRegistry) Ownable(msg.sender) {
         consentRegistry = _consentRegistry;
     }
 
@@ -82,11 +84,23 @@ contract ContributionReceipt is IContributionReceipt {
         Receipt storage r = receipts[receiptId];
         if (r.receiptId == 0) revert ReceiptNotFound(receiptId);
         if (r.status == ReceiptStatus.REVOKED) revert AlreadyRevoked(receiptId);
+        if (r.status == ReceiptStatus.EXPIRED) revert AlreadyExpired(receiptId);
 
         r.status = ReceiptStatus.REVOKED;
         r.revokedAt = uint64(block.timestamp);
 
         emit ReceiptRevoked(receiptId, r.consentId, r.participant, r.revokedAt);
+    }
+
+    function expire(uint256 receiptId) external onlyRegistry {
+        Receipt storage r = receipts[receiptId];
+        if (r.receiptId == 0) revert ReceiptNotFound(receiptId);
+        if (r.status == ReceiptStatus.REVOKED) revert AlreadyRevoked(receiptId);
+        if (r.status == ReceiptStatus.EXPIRED) revert AlreadyExpired(receiptId);
+
+        r.status = ReceiptStatus.EXPIRED;
+
+        emit ReceiptExpired(receiptId, r.consentId, r.participant);
     }
 
     function getReceipt(uint256 receiptId) external view override returns (Receipt memory) {

@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 /// @title IConsentRegistry
 /// @notice Participant-owned consent and access-request state machine.
 interface IConsentRegistry {
-    enum ConsentStatus { NONE, ACTIVE, REVOKED }
-    enum RequestStatus { PENDING, APPROVED, REJECTED }
+    enum ConsentStatus { NONE, ACTIVE, REVOKED, EXPIRED }
+    enum RequestStatus { PENDING, APPROVED, REJECTED, EXPIRED }
     enum RejectionCode { NONE, CVI_REVOKED, CVA_REVOKED, EXPIRED, PURPOSE_MISMATCH, STUDY_MISMATCH, POLICY_UNSUPPORTED }
 
     struct Consent {
@@ -47,6 +47,7 @@ interface IConsentRegistry {
         uint64 expiresAt
     );
     event ConsentRevoked(uint256 indexed consentId, address indexed participant, uint64 revokedAt);
+    event ConsentExpired(uint256 indexed consentId, address indexed participant);
     event AccessRequested(
         uint256 indexed requestId,
         uint256 indexed consentId,
@@ -57,6 +58,8 @@ interface IConsentRegistry {
     );
     event AccessApproved(uint256 indexed requestId, address indexed researcher);
     event AccessRejected(uint256 indexed requestId, RejectionCode indexed code);
+    event BatchSettled(uint256[] requestIds, RequestStatus[] results);
+    event RequestExpired(uint256 indexed requestId);
 
     function createConsent(
         bytes32 cviAttestationHash,
@@ -80,7 +83,18 @@ interface IConsentRegistry {
     /// @param reasonCode Off-chain reason code / hash for rejection context.
     function settleAccessRequest(uint256 requestId, bool ccpPassed, bytes32 reasonCode) external;
 
+    function batchSettle(
+        uint256[] calldata requestIds,
+        bool[] calldata ccpResults,
+        bytes32[] calldata reasonCodes
+    ) external;
+
+    function expireConsent(uint256 consentId) external;
+
     function getConsent(uint256 consentId) external view returns (Consent memory);
     function getAccessRequest(uint256 requestId) external view returns (AccessRequest memory);
     function consentStatus(uint256 consentId) external view returns (ConsentStatus);
+    function getConsentsByParticipant(address participant) external view returns (uint256[] memory);
+    function getRequestsByResearcher(address researcher) external view returns (uint256[] memory);
+    function getRequestsByConsent(uint256 consentId) external view returns (uint256[] memory);
 }

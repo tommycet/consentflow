@@ -19,28 +19,36 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
     mapping(uint256 => Consent) public consents;
     mapping(uint256 => AccessRequest) public requests;
 
+    // ── Indexes for scalable queries ──────────────────────────────
+    mapping(address => uint256[]) internal _consentsByParticipant;
+    mapping(address => uint256[]) internal _requestsByResearcher;
+    mapping(uint256 => uint256[]) internal _requestsByConsent;
+
     error InvalidAddress();
     error ConsentNotFound(uint256 consentId);
     error NotParticipant(uint256 consentId, address caller);
     error ConsentNotActive(uint256 consentId);
     error ConsentAlreadyRevoked(uint256 consentId);
-    error ConsentExpired(uint256 consentId);
+    error ConsentIsExpired(uint256 consentId);
     error ReceiptInvalid(uint256 receiptId);
     error RequestNotFound(uint256 requestId);
     error NotResearcher(uint256 requestId, address caller);
     error RequestNotPending(uint256 requestId);
-    error RequestExpired(uint256 requestId);
+    error RequestIsExpired(uint256 requestId);
     error AlreadySettled(uint256 requestId);
     error PurposeMismatch(uint256 consentId, bytes32 expected, bytes32 actual);
     error StudyMismatch(uint256 consentId, bytes32 expected, bytes32 actual);
     error InvalidExpiry();
     error CompensationTransferFailed(uint256 requestId);
     error CompensationRefundFailed(uint256 requestId);
+    error ArrayLengthMismatch();
 
     constructor(address _contributionReceipt) {
         if (_contributionReceipt == address(0)) revert InvalidAddress();
         contributionReceipt = IContributionReceipt(_contributionReceipt);
     }
+
+    // ── Core lifecycle ────────────────────────────────────────────
 
     /// @inheritdoc IConsentRegistry
     function createConsent(
@@ -84,6 +92,8 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
             status: ConsentStatus.ACTIVE
         });
 
+        _consentsByParticipant[msg.sender].push(consentId);
+
         emit ConsentCreated(
             consentId,
             msg.sender,
@@ -123,7 +133,7 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         Consent storage c = consents[consentId];
         if (c.consentId == 0) revert ConsentNotFound(consentId);
         if (c.status != ConsentStatus.ACTIVE) revert ConsentNotActive(consentId);
-        if (c.expiresAt <= block.timestamp) revert ConsentExpired(consentId);
+        if (c.expiresAt <= block.timestamp) revert ConsentIsExpired(consentId);
         if (c.studyId != studyId) revert StudyMismatch(consentId, c.studyId, studyId);
         if (c.purposeHash != purposeHash)
             revert PurposeMismatch(consentId, c.purposeHash, purposeHash);
@@ -145,6 +155,9 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
             rejectionCode: RejectionCode.NONE
         });
 
+        _requestsByResearcher[msg.sender].push(requestId);
+        _requestsByConsent[consentId].push(requestId);
+
         emit AccessRequested(
             requestId,
             consentId,
@@ -161,23 +174,59 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         bool ccpPassed,
         bytes32 /*ccpReasonCode*/
     ) external override nonReentrant {
+        _settle(requestId, ccpPassed);
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function batchSettle(
+        uint256[] calldata requestIds,
+        bool[] calldata ccpResults,
+        bytes32[] calldata reasonCodes
+    ) external override nonReentrant {
+        if (requestIds.length != ccpResults.length || requestIds.length != reasonCodes.length)
+            revert ArrayLengthMismatch();
+
+        RequestStatus[] memory results = new RequestStatus[](requestIds.length);
+        for (uint256 i = 0; i < requestIds.length; i++) {
+            _settle(requestIds[i], ccpResults[i]);
+            results[i] = requests[requestIds[i]].status;
+        }
+        emit BatchSettled(requestIds, results);
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function expireConsent(uint256 consentId) external override {
+        Consent storage c = consents[consentId];
+        if (c.consentId == 0) revert ConsentNotFound(consentId);
+        if (c.status != ConsentStatus.ACTIVE) revert ConsentNotActive(consentId);
+        if (c.expiresAt > block.timestamp) revert ConsentNotActive(consentId);
+
+        c.status = ConsentStatus.EXPIRED;
+        c.revokedAt = uint64(block.timestamp);
+
+        contributionReceipt.revoke(c.receiptId);
+
+        emit ConsentExpired(consentId, c.participant);
+    }
+
+    // ── Internal ──────────────────────────────────────────────────
+
+    function _settle(uint256 requestId, bool ccpPassed) internal {
         AccessRequest storage r = requests[requestId];
         if (r.requestId == 0) revert RequestNotFound(requestId);
         if (r.status != RequestStatus.PENDING) revert RequestNotPending(requestId);
         if (r.researcher != msg.sender) revert NotResearcher(requestId, msg.sender);
-        if (r.expiresAt <= block.timestamp) revert RequestExpired(requestId);
+        if (r.expiresAt <= block.timestamp) revert RequestIsExpired(requestId);
 
-        // Local consent/receipt state sanity checks
         Consent storage c = consents[r.consentId];
         if (c.status != ConsentStatus.ACTIVE) revert ConsentNotActive(r.consentId);
-        if (c.expiresAt <= block.timestamp) revert ConsentExpired(r.consentId);
+        if (c.expiresAt <= block.timestamp) revert ConsentIsExpired(r.consentId);
         if (!contributionReceipt.isValid(r.receiptId)) revert ReceiptInvalid(r.receiptId);
 
         if (ccpPassed) {
             r.status = RequestStatus.APPROVED;
             emit AccessApproved(requestId, msg.sender);
 
-            // Transfer compensation to participant
             if (r.compensation > 0) {
                 (bool sent, ) = payable(c.participant).call{value: r.compensation}("");
                 if (!sent) revert CompensationTransferFailed(requestId);
@@ -187,13 +236,14 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
             r.rejectionCode = RejectionCode.CVI_REVOKED;
             emit AccessRejected(requestId, r.rejectionCode);
 
-            // Refund compensation to researcher
             if (r.compensation > 0) {
                 (bool sent, ) = payable(r.researcher).call{value: r.compensation}("");
                 if (!sent) revert CompensationRefundFailed(requestId);
             }
         }
     }
+
+    // ── View functions ───────────────────────────────────────────
 
     /// @inheritdoc IConsentRegistry
     function getConsent(uint256 consentId) external view override returns (Consent memory) {
@@ -211,6 +261,26 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
 
     /// @inheritdoc IConsentRegistry
     function consentStatus(uint256 consentId) external view override returns (ConsentStatus) {
-        return consents[consentId].status;
+        Consent storage c = consents[consentId];
+        if (c.consentId == 0) revert ConsentNotFound(consentId);
+        if (c.status == ConsentStatus.ACTIVE && c.expiresAt <= block.timestamp) {
+            return ConsentStatus.EXPIRED;
+        }
+        return c.status;
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function getConsentsByParticipant(address participant) external view override returns (uint256[] memory) {
+        return _consentsByParticipant[participant];
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function getRequestsByResearcher(address researcher) external view override returns (uint256[] memory) {
+        return _requestsByResearcher[researcher];
+    }
+
+    /// @inheritdoc IConsentRegistry
+    function getRequestsByConsent(uint256 consentId) external view override returns (uint256[] memory) {
+        return _requestsByConsent[consentId];
     }
 }

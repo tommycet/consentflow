@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 /// @title IContributionReceipt
 /// @notice Purpose-bound, wallet-locked CVA receipt.
 interface IContributionReceipt {
-    enum ReceiptStatus { NONE, ACTIVE, REVOKED }
+    enum ReceiptStatus { NONE, ACTIVE, REVOKED, EXPIRED }
 
     struct Receipt {
         uint256 receiptId;
@@ -36,6 +36,11 @@ interface IContributionReceipt {
         address indexed participant,
         uint64 revokedAt
     );
+    event ReceiptExpired(
+        uint256 indexed receiptId,
+        uint256 indexed consentId,
+        address indexed participant
+    );
 
     function issue(
         address participant,
@@ -48,6 +53,8 @@ interface IContributionReceipt {
     ) external returns (uint256 receiptId);
 
     function revoke(uint256 receiptId) external;
+
+    function expire(uint256 receiptId) external;
 
     function getReceipt(uint256 receiptId) external view returns (Receipt memory);
     function isValid(uint256 receiptId) external view returns (bool);

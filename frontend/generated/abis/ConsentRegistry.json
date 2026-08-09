@@ -1,154 +1,1000 @@
 [
   {
-    "inputs": [],
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_contributionReceipt",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "_consentIds",
-    "outputs": [{"type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "_requestIds",
-    "outputs": [{"type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
-    "inputs": [{"type": "uint256", "name": ""}],
+    "type": "function",
+    "name": "batchSettle",
+    "inputs": [
+      {
+        "name": "requestIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "ccpResults",
+        "type": "bool[]",
+        "internalType": "bool[]"
+      },
+      {
+        "name": "reasonCodes",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "consentStatus",
-    "outputs": [{"type": "uint8"}],
-    "stateMutability": "view",
-    "type": "function"
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "enum IConsentRegistry.ConsentStatus"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
-    "inputs": [{"type": "uint256", "name": ""}],
+    "type": "function",
     "name": "consents",
-    "outputs": [
-      {"type": "uint256"},
-      {"type": "address"},
-      {"type": "bytes32"},
-      {"type": "uint256"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint8"}
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "outputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "participant",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "cviAttestationHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "studyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "purposeHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "policyVersion",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "createdAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "revokedAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "internalType": "enum IConsentRegistry.ConsentStatus"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
-    "inputs": [{"type": "uint256", "name": ""}],
+    "type": "function",
+    "name": "contributionReceipt",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IContributionReceipt"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "createConsent",
+    "inputs": [
+      {
+        "name": "cviAttestationHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "studyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "purposeHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "policyVersion",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "expireConsent",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "getAccessRequest",
-    "outputs": [
-      {"type": "uint256"},
-      {"type": "uint256"},
-      {"type": "uint256"},
-      {"type": "address"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint256"},
-      {"type": "uint8"},
-      {"type": "uint8"}
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IConsentRegistry.AccessRequest",
+        "components": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "consentId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiptId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "researcher",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "studyId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "purposeHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "queuedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "expiresAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "compensation",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum IConsentRegistry.RequestStatus"
+          },
+          {
+            "name": "rejectionCode",
+            "type": "uint8",
+            "internalType": "enum IConsentRegistry.RejectionCode"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
   },
   {
-    "inputs": [{"type": "uint256", "name": ""}],
+    "type": "function",
     "name": "getConsent",
-    "outputs": [
-      {"type": "uint256"},
-      {"type": "address"},
-      {"type": "bytes32"},
-      {"type": "uint256"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint8"}
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IConsentRegistry.Consent",
+        "components": [
+          {
+            "name": "consentId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "participant",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "cviAttestationHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "receiptId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "studyId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "purposeHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "policyVersion",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "createdAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "expiresAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "revokedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum IConsentRegistry.ConsentStatus"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
   },
   {
-    "inputs": [{"type": "uint256", "name": ""}],
+    "type": "function",
+    "name": "getConsentsByParticipant",
+    "inputs": [
+      {
+        "name": "participant",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRequestsByConsent",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRequestsByResearcher",
+    "inputs": [
+      {
+        "name": "researcher",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queueAccessRequest",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "studyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "purposeHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "requests",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
-      {"type": "uint256"},
-      {"type": "uint256"},
-      {"type": "uint256"},
-      {"type": "address"},
-      {"type": "bytes32"},
-      {"type": "bytes32"},
-      {"type": "uint64"},
-      {"type": "uint64"},
-      {"type": "uint256"},
-      {"type": "uint8"},
-      {"type": "uint8"}
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "researcher",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "studyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "purposeHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "queuedAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "compensation",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "internalType": "enum IConsentRegistry.RequestStatus"
+      },
+      {
+        "name": "rejectionCode",
+        "type": "uint8",
+        "internalType": "enum IConsentRegistry.RejectionCode"
+      }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
   },
   {
-    "anonymous": false,
+    "type": "function",
+    "name": "revokeConsent",
     "inputs": [
-      {"indexed": true, "name": "requestId", "type": "uint256"},
-      {"indexed": true, "name": "researcher", "type": "address"}
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
     ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "settleAccessRequest",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "ccpPassed",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
     "name": "AccessApproved",
-    "type": "event"
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "researcher",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "name": "requestId", "type": "uint256"},
-      {"indexed": true, "name": "reason", "type": "uint8"}
-    ],
+    "type": "event",
     "name": "AccessRejected",
-    "type": "event"
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "code",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum IConsentRegistry.RejectionCode"
+      }
+    ],
+    "anonymous": false
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "name": "requestId", "type": "uint256"},
-      {"indexed": true, "name": "consentId", "type": "uint256"},
-      {"indexed": true, "name": "receiptId", "type": "uint256"},
-      {"indexed": false, "name": "researcher", "type": "address"},
-      {"indexed": false, "name": "compensation", "type": "uint256"},
-      {"indexed": false, "name": "expiresAt", "type": "uint64"}
-    ],
+    "type": "event",
     "name": "AccessRequested",
-    "type": "event"
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "researcher",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "compensation",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
   },
   {
-    "anonymous": false,
+    "type": "event",
+    "name": "BatchSettled",
     "inputs": [
-      {"indexed": true, "name": "consentId", "type": "uint256"},
-      {"indexed": true, "name": "participant", "type": "address"},
-      {"indexed": true, "name": "cviHash", "type": "bytes32"},
-      {"indexed": false, "name": "receiptId", "type": "uint256"},
-      {"indexed": false, "name": "studyId", "type": "bytes32"},
-      {"indexed": false, "name": "purposeHash", "type": "bytes32"},
-      {"indexed": false, "name": "expiresAt", "type": "uint64"}
+      {
+        "name": "requestIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "results",
+        "type": "uint8[]",
+        "indexed": false,
+        "internalType": "enum IConsentRegistry.RequestStatus[]"
+      }
     ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ConsentCreated",
-    "type": "event"
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "participant",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "studyId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "cviAttestationHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "purposeHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "policyVersion",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
   },
   {
-    "anonymous": false,
+    "type": "event",
+    "name": "ConsentExpired",
     "inputs": [
-      {"indexed": true, "name": "consentId", "type": "uint256"},
-      {"indexed": true, "name": "participant", "type": "address"},
-      {"indexed": false, "name": "revokedAt", "type": "uint64"}
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "participant",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
     ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ConsentRevoked",
-    "type": "event"
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "participant",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "revokedAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RequestExpired",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AlreadySettled",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ArrayLengthMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "CompensationRefundFailed",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "CompensationTransferFailed",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ConsentAlreadyRevoked",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ConsentIsExpired",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ConsentNotActive",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ConsentNotFound",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidExpiry",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotParticipant",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "caller",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "NotResearcher",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "caller",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PurposeMismatch",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "expected",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "actual",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReceiptInvalid",
+    "inputs": [
+      {
+        "name": "receiptId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RequestIsExpired",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "RequestNotFound",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "RequestNotPending",
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "StudyMismatch",
+    "inputs": [
+      {
+        "name": "consentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "expected",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "actual",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ]
   }
 ]

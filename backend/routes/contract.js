@@ -13,6 +13,7 @@ const { postPlain } = require('../src/cleanverse');
 const { config } = require('../src/config');
 const { ok, fail, normalizeAddress, wrap } = require('../src/handlers');
 const { getConsentRegistry, getContributionReceipt } = require('../src/ethers-provider');
+const { getEvents } = require('../src/event-indexer');
 
 const router = Router();
 
@@ -233,6 +234,116 @@ router.get(
       status: Number(reqData[9]),
       rejectionCode: Number(reqData[10]),
     });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /events
+// Query params: ?type=ConsentCreated&participant=0x...&consentId=1
+// ---------------------------------------------------------------------------
+router.get(
+  '/events',
+  wrap(async (req, res) => {
+    const filters = {};
+    if (req.query.type) filters.type = String(req.query.type);
+    if (req.query.participant) filters.participant = String(req.query.participant);
+    if (req.query.consentId) filters.consentId = Number(req.query.consentId);
+
+    const events = getEvents(filters);
+    return ok(res, { total: events.length, events });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /consents/:participant — get all consent IDs for a participant
+// ---------------------------------------------------------------------------
+router.get(
+  '/consents/:address',
+  wrap(async (req, res) => {
+    const { valid, address, error } = normalizeAddress(req.params.address);
+    if (!valid) return fail(res, error || 'invalid address');
+
+    try {
+      const registry = getConsentRegistry();
+      const ids = await registry.getConsentsByParticipant(address);
+      return ok(res, {
+        participant: address,
+        consentIds: ids.map((id) => Number(id)),
+        total: ids.length,
+      });
+    } catch (e) {
+      // If contract not deployed, fall back to event-indexed data
+      const events = getEvents({ participant: address, type: 'ConsentCreated' });
+      return ok(res, {
+        participant: address,
+        consentIds: events.map((e) => Number(e.args.consentId)),
+        total: events.length,
+        source: 'events',
+      });
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /stats — aggregate protocol statistics
+// ---------------------------------------------------------------------------
+router.get(
+  '/stats',
+  wrap(async (req, res) => {
+    const events = getEvents();
+    const stats = {
+      totalConsents: 0,
+      activeConsents: 0,
+      revokedConsents: 0,
+      expiredConsents: 0,
+      totalRequests: 0,
+      approvedRequests: 0,
+      rejectedRequests: 0,
+      pendingRequests: 0,
+      totalCompensation: '0',
+      byStudy: {},
+    };
+
+    for (const evt of events) {
+      switch (evt.type) {
+        case 'ConsentCreated':
+          stats.totalConsents++;
+          stats.activeConsents++;
+          break;
+        case 'ConsentRevoked':
+          stats.activeConsents--;
+          stats.revokedConsents++;
+          break;
+        case 'ConsentExpired':
+          stats.activeConsents--;
+          stats.expiredConsents++;
+          break;
+        case 'AccessRequested':
+          stats.totalRequests++;
+          stats.pendingRequests++;
+          if (evt.args.compensation) {
+            stats.totalCompensation = (
+              BigInt(stats.totalCompensation) + BigInt(evt.args.compensation)
+            ).toString();
+          }
+          const studyKey = evt.args.studyId || 'unknown';
+          if (!stats.byStudy[studyKey]) {
+            stats.byStudy[studyKey] = { consents: 0, requests: 0, compensation: '0' };
+          }
+          stats.byStudy[studyKey].requests++;
+          break;
+        case 'AccessApproved':
+          stats.pendingRequests--;
+          stats.approvedRequests++;
+          break;
+        case 'AccessRejected':
+          stats.pendingRequests--;
+          stats.rejectedRequests++;
+          break;
+      }
+    }
+
+    return ok(res, stats);
   })
 );
 
