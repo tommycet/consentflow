@@ -6,6 +6,10 @@ out/
 .logs/
 .ignore/
 
+# Node
+node_modules/
+**/node_modules/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
