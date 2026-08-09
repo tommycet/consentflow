@@ -53,7 +53,8 @@ ConsentFlow is a patient-controlled consent rail built on the Cleanverse complia
 - **Total: 70 tests, all passing**
 
 ## Scalability
-- **Batch settle** — settles N requests in a single transaction, amortizing gas overhead
+- **Batch settle** — settles N access requests in a single transaction, amortizing gas overhead
+- **Batch create consent** — enrolls up to 50 participants in a single transaction, reducing deployment gas
 - **On-chain indexes** — `getConsentsByParticipant`, `getRequestsByResearcher`, `getRequestsByConsent` enable O(1) lookup without scanning all records
 - **Auto-expiry** — permissionless `expireConsent` allows anyone to gas-efficiently mark expired consents
 - **Gas-optimized struct packing** — `createdAt`, `expiresAt`, `revokedAt`, `status` packed into a single 256-bit storage slot
