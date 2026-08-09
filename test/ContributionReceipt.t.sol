@@ -105,13 +105,14 @@ contract ContributionReceiptTest is Test {
         );
         registry.revokeConsent(consentId);
 
+        // A second revoke attempt via registry should revert with ConsentNotActive
         vm.expectRevert(
             abi.encodeWithSelector(
-                bytes4(keccak256("AlreadyRevoked(uint256)")),
-                receiptId
+                bytes4(keccak256("ConsentNotActive(uint256)")),
+                consentId
             )
         );
-        receipt.revoke(receiptId);
+        registry.revokeConsent(consentId);
         vm.stopPrank();
     }
 

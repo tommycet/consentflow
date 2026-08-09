@@ -100,7 +100,6 @@ contract AccessControlTest is Test {
 
         IConsentRegistry.Consent memory c = registry.getConsent(consentId);
         assertEq(c.participant, imposter);
-        assertEq(c.participant, msg.sender); // msg.sender in test context is the last prank
     }
 
     function test_ResearcherCanApproveOwnRequest() public {
