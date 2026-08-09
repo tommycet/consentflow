@@ -1,0 +1,154 @@
+[
+  {
+    "inputs": [],
+    "name": "_consentIds",
+    "outputs": [{"type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_requestIds",
+    "outputs": [{"type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "consentStatus",
+    "outputs": [{"type": "uint8"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "consents",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "uint256"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "getAccessRequest",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint256"},
+      {"type": "uint8"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "getConsent",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "uint256"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "requests",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint256"},
+      {"type": "uint8"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "requestId", "type": "uint256"},
+      {"indexed": true, "name": "researcher", "type": "address"}
+    ],
+    "name": "AccessApproved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "requestId", "type": "uint256"},
+      {"indexed": true, "name": "reason", "type": "uint8"}
+    ],
+    "name": "AccessRejected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "requestId", "type": "uint256"},
+      {"indexed": true, "name": "consentId", "type": "uint256"},
+      {"indexed": true, "name": "receiptId", "type": "uint256"},
+      {"indexed": false, "name": "researcher", "type": "address"},
+      {"indexed": false, "name": "compensation", "type": "uint256"},
+      {"indexed": false, "name": "expiresAt", "type": "uint64"}
+    ],
+    "name": "AccessRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "consentId", "type": "uint256"},
+      {"indexed": true, "name": "participant", "type": "address"},
+      {"indexed": true, "name": "cviHash", "type": "bytes32"},
+      {"indexed": false, "name": "receiptId", "type": "uint256"},
+      {"indexed": false, "name": "studyId", "type": "bytes32"},
+      {"indexed": false, "name": "purposeHash", "type": "bytes32"},
+      {"indexed": false, "name": "expiresAt", "type": "uint64"}
+    ],
+    "name": "ConsentCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "consentId", "type": "uint256"},
+      {"indexed": true, "name": "participant", "type": "address"},
+      {"indexed": false, "name": "revokedAt", "type": "uint64"}
+    ],
+    "name": "ConsentRevoked",
+    "type": "event"
+  }
+]

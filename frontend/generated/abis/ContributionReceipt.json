@@ -1,0 +1,100 @@
+[
+  {
+    "inputs": [],
+    "name": "_receiptIds",
+    "outputs": [{"type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "consentRegistry",
+    "outputs": [{"type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "getReceipt",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "isValid",
+    "outputs": [{"type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "receiptStatus",
+    "outputs": [{"type": "uint8"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "receipts",
+    "outputs": [
+      {"type": "uint256"},
+      {"type": "uint256"},
+      {"type": "address"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "bytes32"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint64"},
+      {"type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"type": "uint256", "name": ""}],
+    "name": "registrySet",
+    "outputs": [{"type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "receiptId", "type": "uint256"},
+      {"indexed": true, "name": "cviRecordId", "type": "uint256"},
+      {"indexed": true, "name": "owner", "type": "address"},
+      {"indexed": false, "name": "studyId", "type": "bytes32"},
+      {"indexed": false, "name": "purposeHash", "type": "bytes32"},
+      {"indexed": false, "name": "cviHash", "type": "bytes32"},
+      {"indexed": false, "name": "expiresAt", "type": "uint64"}
+    ],
+    "name": "ReceiptIssued",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "receiptId", "type": "uint256"},
+      {"indexed": true, "name": "cviRecordId", "type": "uint256"},
+      {"indexed": true, "name": "owner", "type": "address"},
+      {"indexed": false, "name": "revokedAt", "type": "uint64"}
+    ],
+    "name": "ReceiptRevoked",
+    "type": "event"
+  }
+]
