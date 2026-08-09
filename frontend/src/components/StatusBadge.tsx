@@ -95,6 +95,9 @@ export function StatusBadge({ status, variant = 'default', size = 'md' }: Status
     ACTIVE: { label: 'Active', color: 'bg-emerald-500' },
     REVOKED: { label: 'Revoked', color: 'bg-red-500' },
     PENDING: { label: 'Pending', color: 'bg-yellow-500' },
+    APPROVED: { label: 'Approved', color: 'bg-emerald-500' },
+    REJECTED: { label: 'Rejected', color: 'bg-red-500' },
+    EXPIRED: { label: 'Expired', color: 'bg-gray-500' },
     NONE: { label: 'None', color: 'bg-gray-600' },
   };
 

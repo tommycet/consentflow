@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-const DEMO_FAUCET_KEY = 'fd17291e63a2f4865e4a1340ca60ec23b54977ffb8c8bed1b49edf66bb2f05c7';
+const DEMO_FAUCET_KEY = '180e533e588125118132a37e3c60fce5b985367708ff927bb4d078d4e95ff314';
 
 export interface WalletState {
   address: string | null;

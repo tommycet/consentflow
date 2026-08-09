@@ -42,7 +42,14 @@ export function Participant() {
               createdAt: String(consent.createdAt),
               expiresAt: String(consent.expiresAt),
               revokedAt: String(consent.revokedAt || '0'),
-              status: consent.status === 1 ? 'ACTIVE' : consent.status === 2 ? 'REVOKED' : 'NONE',
+              // ethers v6 returns uint8/uint64 as bigint, so `=== 1` was always
+              // false and every consent rendered as 'NONE'.
+              status:
+                Number(consent.status) === 1
+                  ? 'ACTIVE'
+                  : Number(consent.status) === 2
+                    ? 'REVOKED'
+                    : 'NONE',
             } as ConsentRecord);
           }
         } catch {

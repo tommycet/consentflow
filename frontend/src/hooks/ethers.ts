@@ -7,9 +7,10 @@ import { apiClient } from '../lib/api';
 // ─── Ethers Provider ────────────────────────────────────────
 
 export function getProvider(): ethers.JsonRpcProvider {
-  return new ethers.JsonRpcProvider(CONFIG.rpcUrl, {
-    chainId: CONFIG.chainId,
-  });
+  // ethers v6 rejects a bare `{ chainId }` object as a Network — it must be a
+  // name, a chainId number/bigint, or a Network instance. Passing the object
+  // threw INVALID_ARGUMENT on every read and write.
+  return new ethers.JsonRpcProvider(CONFIG.rpcUrl, CONFIG.chainId);
 }
 
 export function getWallet(): ethers.Wallet | null {
@@ -34,10 +35,11 @@ export async function getConsentRegistryContract(
   }
 
   const abi = (CONFIG.abi as any).ConsentRegistry;
-  const signerOrProvider = wallet || provider;
 
-  if (wallet && wallet.provider) {
-    return new ethers.Contract(contractAddress, abi, wallet.provider);
+  // A Signer must be attached for write calls. Attaching `wallet.provider`
+  // yields a read-only contract, so every tx silently fails to send.
+  if (wallet) {
+    return new ethers.Contract(contractAddress, abi, wallet);
   }
   return new ethers.Contract(contractAddress, abi, provider);
 }
@@ -55,8 +57,8 @@ export async function getContributionReceiptContract(
   const signerOrProvider = wallet || provider;
   const abi = (CONFIG.abi as any).ContributionReceipt;
 
-  if (wallet && wallet.provider) {
-    return new ethers.Contract(contractAddress, abi, wallet.provider);
+  if (wallet) {
+    return new ethers.Contract(contractAddress, abi, wallet);
   }
   return new ethers.Contract(contractAddress, abi, provider);
 }

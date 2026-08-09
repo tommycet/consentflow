@@ -38,7 +38,13 @@ export function Researcher() {
             queuedAt: String(req.queuedAt),
             expiresAt: String(req.expiresAt),
             compensation: req.compensation.toString(),
-            status: req.status === 0 ? 'PENDING' : req.status === 1 ? 'APPROVED' : 'REJECTED',
+            // uint8 arrives as bigint in ethers v6 — compare numerically.
+            status:
+              Number(req.status) === 0
+                ? 'PENDING'
+                : Number(req.status) === 1
+                  ? 'APPROVED'
+                  : 'REJECTED',
             rejectionCode: String(req.rejectionCode || 'NONE'),
           } as AccessRequest);
         } catch {

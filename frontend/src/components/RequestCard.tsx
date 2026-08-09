@@ -2,6 +2,14 @@ import type { AccessRequest } from '../types';
 import { StatusBadge } from './StatusBadge';
 import { truncateAddress } from '../hooks/useUtils';
 
+/** Contract timestamps are UNIX seconds; 0 means unset. */
+function formatChainTime(value: string | number | bigint | null | undefined): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  return new Date(seconds * 1000).toLocaleString();
+}
+
 interface RequestCardProps {
   request: AccessRequest;
   onSettle?: (requestId: string) => void;
@@ -9,6 +17,8 @@ interface RequestCardProps {
 }
 
 export function RequestCard({ request, onSettle, canSettle = true }: RequestCardProps) {
+  const queuedAt = formatChainTime(request.queuedAt);
+  const expiresAt = formatChainTime(request.expiresAt);
   return (
     <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
@@ -37,14 +47,18 @@ export function RequestCard({ request, onSettle, canSettle = true }: RequestCard
           <span className="text-gray-500 w-28">Consent ID:</span>
           <span className="font-mono text-gray-300">#{request.consentId}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500 w-28">Queued:</span>
-          <span className="text-gray-300">{new Date(request.queuedAt).toLocaleString()}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500 w-28">Expires:</span>
-          <span className="text-gray-300">{new Date(request.expiresAt).toLocaleString()}</span>
-        </div>
+        {queuedAt && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500 w-28">Queued:</span>
+            <span className="text-gray-300">{queuedAt}</span>
+          </div>
+        )}
+        {expiresAt && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500 w-28">Expires:</span>
+            <span className="text-gray-300">{expiresAt}</span>
+          </div>
+        )}
       </div>
 
       {canSettle && request.status === 'PENDING' && (
