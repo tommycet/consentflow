@@ -1,0 +1,12 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+COPY backend/package*.json ./
+RUN npm ci --production
+
+COPY backend/ ./
+
+EXPOSE 4000
+
+CMD ["node", "index.js"]
