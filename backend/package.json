@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "test": "node test-adapter.js"
+    "test": "node test/api.test.js",
+    "test:adapter": "node test-adapter.js"
   },
   "engines": {
     "node": ">=18"

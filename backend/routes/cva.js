@@ -25,6 +25,7 @@ const {
 } = require('../src/cva-token');
 const { getContributionReceipt } = require('../src/ethers-provider');
 const { writeLimiter } = require('../src/middleware');
+const { recordAudit } = require('../src/audit-trail');
 
 const router = Router();
 
@@ -109,6 +110,7 @@ router.get(
     if (!valid) return fail(res, error || 'invalid wallet address');
     try {
       const raw = await getAtokenBalance(address);
+      recordAudit('on-chain', 'CVA_BALANCE', { wallet: address, balance: raw, decimals: 6 });
       return ok(res, { wallet: address, balance: raw, decimals: 6 });
     } catch (e) {
       return fail(res, `aUSDC balance query failed: ${e.message}`, 502);
@@ -257,6 +259,7 @@ router.post(
       const receipt = getContributionReceipt();
       const valid = await receipt.isValid(receiptId);
       const status = await receipt.receiptStatus(receiptId);
+      recordAudit('on-chain', 'CVA_RECEIPT_VERIFY', { receiptId, valid, status: Number(status) });
       return ok(res, {
         receiptId,
         valid,

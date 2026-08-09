@@ -96,6 +96,13 @@ router.post(
       .filter((l) => l.fragment && l.fragment.name === 'ConsentCreated')
       .map((l) => Number(l.args[0]))[0];
 
+    recordAudit('on-chain', 'ConsentCreated', {
+      consentId: consentId ?? null,
+      receiptId: receiptId ?? null,
+      participant: address,
+      txHash: createReceipt.hash,
+    });
+
     return ok(res, {
       consentId: consentId ?? null,
       receiptId: receiptId ?? null,
@@ -151,6 +158,13 @@ router.post(
     const requestId = receipt.logs
       .filter((l) => l.fragment && l.fragment.name === 'AccessRequested')
       .map((l) => Number(l.args[0]))[0];
+
+    recordAudit('on-chain', 'AccessRequested', {
+      requestId: requestId ?? null,
+      consentId: cid.value,
+      researcher,
+      txHash: receipt.hash,
+    });
 
     return ok(res, {
       requestId: requestId ?? null,
