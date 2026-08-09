@@ -31,7 +31,7 @@ app.use('/api/ccp', require('./routes/ccp'));
 app.use('/api/contract', generalLimiter, require('./routes/contract'));
 
 // Webhook callback system.
-const { router: webhookRouter, emit: emitWebhook } = require('./src/webhook');
+const { router: webhookRouter, emit: emitWebhook } = require('./routes/webhook');
 app.use('/api/webhook', generalLimiter, webhookRouter);
 app.use((req, res, next) => { req.webhook = { emit: emitWebhook }; next(); });
 
