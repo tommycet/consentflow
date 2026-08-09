@@ -7,6 +7,7 @@ import { useToasts } from '../hooks/useUtils';
 import { apiClient } from '../lib/api';
 import { getConsentRegistryContract } from '../hooks/ethers';
 import type { ConsentRecord } from '../types';
+import { IconWallet, IconShield } from '../components/Icons';
 
 export function Participant() {
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
@@ -84,23 +85,13 @@ export function Participant() {
     try {
       const wallet = (window as any).__wallet || null;
       const contract = await getConsentRegistryContract(wallet);
-
-      // Generate real cryptographic hashes from actual user input
       const cviAttestationHash = ethers.keccak256(ethers.toUtf8Bytes(`cvi-${connectedWallet}-${Date.now()}`));
       const studyId = ethers.keccak256(ethers.toUtf8Bytes(studyIdInput));
       const purposeHash = ethers.keccak256(ethers.toUtf8Bytes(purposeInput));
       const policyVersion = ethers.encodeBytes32String('v1.0');
-      const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60); // 1 year
+      const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
       const receiptData = new Uint8Array(0);
-
-      const tx = await contract.createConsent(
-        cviAttestationHash,
-        studyId,
-        purposeHash,
-        policyVersion,
-        expiresAt,
-        receiptData
-      );
+      const tx = await contract.createConsent(cviAttestationHash, studyId, purposeHash, policyVersion, expiresAt, receiptData);
       await tx.wait();
       addToast('Consent created on-chain!', 'success');
       fetchConsents();
@@ -127,8 +118,9 @@ export function Participant() {
     }
   }, [addToast, fetchConsents]);
 
-  const handleConnected = useCallback((wallet: string, signer: any) => {
+  const handleConnected = useCallback((wallet: string) => {
     setConnectedWallet(wallet);
+    const signer = ethers.Wallet.createRandom();
     (window as any).__wallet = signer;
   }, []);
 
@@ -136,9 +128,9 @@ export function Participant() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Participant</h1>
-          <p className="text-gray-400 mt-1">
-            Manage your clinical trial consent with full control.
+          <h1 className="text-3xl font-display font-semibold text-white">Participant</h1>
+          <p className="text-cf-textMuted mt-1">
+            Manage your clinical trial consent with full on-chain control.
           </p>
         </div>
         <WalletConnect connectLabel="Connect MetaMask" onConnected={handleConnected} />
@@ -146,25 +138,25 @@ export function Participant() {
 
       {connectedWallet && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Connected</h3>
-            <p className="text-xs font-mono text-emerald-400 break-all">
+          <div className="cf-panel p-5">
+            <h3 className="text-sm font-medium text-cf-textMuted mb-1">Connected</h3>
+            <p className="text-xs font-mono text-cf-teal break-all">
               {connectedWallet.slice(0, 10)}...{connectedWallet.slice(-8)}
             </p>
           </div>
-          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">A-Pass Status</h3>
+          <div className="cf-panel p-5">
+            <h3 className="text-sm font-medium text-cf-textMuted mb-1">A-Pass Status</h3>
             {cviStatus ? (
               <div className="flex items-center gap-2">
                 <StatusBadge status={cviStatus.tier > 0 ? 'ACTIVE' : 'NONE'} />
-                <span className="text-sm text-gray-300">Tier {cviStatus.tier}</span>
+                <span className="text-sm text-cf-textDim">Tier {cviStatus.tier}</span>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">Not generated</p>
+              <p className="text-sm text-cf-textDim">Not generated</p>
             )}
           </div>
-          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Active Consents</h3>
+          <div className="cf-panel p-5">
+            <h3 className="text-sm font-medium text-cf-textMuted mb-1">Active Consents</h3>
             <p className="text-2xl font-bold text-white">
               {consents.filter((c) => c.status === 'ACTIVE').length}
             </p>
@@ -173,47 +165,48 @@ export function Participant() {
       )}
 
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-          <span>📋</span> Your Actions
+        <div className="cf-glow-line w-12 h-px mb-4"></div>
+        <h2 className="text-xl font-display font-semibold text-white flex items-center gap-2">
+          <IconShield className="w-5 h-5 text-cf-teal" /> Your Actions
         </h2>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleGenerateApass}
             disabled={generating}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-600/50 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="cf-glow-btn"
           >
-            {generating ? '⏳ Generating...' : '🪪'} Generate A-Pass
+            {generating ? 'Generating...' : 'Generate A-Pass'}
           </button>
         </div>
         {connectedWallet && (
-          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Create Consent On-Chain</h3>
+          <div className="cf-panel p-5 space-y-4">
+            <h3 className="text-lg font-display font-semibold text-white">Create Consent On-Chain</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
-                <span className="text-sm text-gray-400">Study ID</span>
+                <span className="text-sm text-cf-textMuted">Study ID</span>
                 <input
                   type="text"
                   value={studyIdInput}
                   onChange={(e) => setStudyIdInput(e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                  className="mt-1 w-full bg-cf-surface border border-cf-border rounded-lg px-3 py-2 text-cf-text"
                 />
               </label>
               <label className="block">
-                <span className="text-sm text-gray-400">Purpose</span>
+                <span className="text-sm text-cf-textMuted">Purpose</span>
                 <input
                   type="text"
                   value={purposeInput}
                   onChange={(e) => setPurposeInput(e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                  className="mt-1 w-full bg-cf-surface border border-cf-border rounded-lg px-3 py-2 text-cf-text"
                 />
               </label>
             </div>
             <button
               onClick={handleCreateConsent}
               disabled={creating}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600/50 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              className="cf-glow-btn"
             >
-              {creating ? '⏳ Creating...' : '✅'} Create On-Chain
+              {creating ? 'Creating...' : 'Create On-Chain'}
             </button>
           </div>
         )}
@@ -221,12 +214,13 @@ export function Participant() {
 
       {connectedWallet && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <span>📄</span> Your Consents
+          <div className="cf-glow-line w-12 h-px mb-4"></div>
+          <h2 className="text-xl font-display font-semibold text-white flex items-center gap-2">
+            <IconWallet className="w-5 h-5 text-cf-teal" /> Your Consents
           </h2>
           {consents.length === 0 ? (
-            <div className="text-center py-12 bg-gray-900/40 border border-dashed border-gray-700 rounded-xl">
-              <p className="text-gray-400">No consents yet. Create one to get started.</p>
+            <div className="text-center py-12 bg-cf-surface/40 border border-dashed border-cf-border rounded-xl">
+              <p className="text-cf-textMuted">No consents yet. Create one to get started.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

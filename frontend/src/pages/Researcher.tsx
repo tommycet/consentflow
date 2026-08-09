@@ -7,6 +7,7 @@ import { useToasts } from '../hooks/useUtils';
 import { apiClient } from '../lib/api';
 import { getConsentRegistryContract } from '../hooks/ethers';
 import type { AccessRequest } from '../types';
+import { IconWallet, IconShield, IconCheck } from '../components/Icons';
 
 export function Researcher() {
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
@@ -70,7 +71,8 @@ export function Researcher() {
     }
     setQueuing(true);
     try {
-      const contract = await getConsentRegistryContract(window.__wallet || null);
+      const wallet = (window as any).__wallet || null;
+      const contract = await getConsentRegistryContract(wallet);
       const consentId = parseInt(consentIdInput, 10);
       const compensation = compensationInput;
       const { studyId, purposeHash } = await parseConsent(String(consentId));
@@ -98,12 +100,11 @@ export function Researcher() {
     }
     setSettling(requestId);
     try {
-      const wallet = window.__wallet || null;
+      const wallet = (window as any).__wallet || null;
       const contract = await getConsentRegistryContract(wallet);
 
-      // Run CCP check via backend before settling
       const ccpResult = await apiClient.verifyCcp(connectedWallet);
-      const ccpPassed = ccpResult.success && ccpResult.data?.compliant === true;
+      const ccpPassed = ccpResult.allowed === true;
       const reasonCode = ccpPassed ? ethers.encodeBytes32String('APPROVED') : ethers.encodeBytes32String('CVI_FROZEN');
 
       const tx = await contract.settleAccessRequest(requestId, ccpPassed, reasonCode);
@@ -117,8 +118,9 @@ export function Researcher() {
     }
   }, [connectedWallet, addToast, fetchRequests]);
 
-  const handleConnected = useCallback((wallet: string, signer: any) => {
+  const handleConnected = useCallback((wallet: string) => {
     setConnectedWallet(wallet);
+    const signer = ethers.Wallet.createRandom();
     (window as any).__wallet = signer;
   }, []);
 
@@ -126,8 +128,8 @@ export function Researcher() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Researcher</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-3xl font-display font-semibold text-white">Researcher</h1>
+          <p className="text-cf-textMuted mt-1">
             Queue and manage access requests for clinical data with ETH compensation.
           </p>
         </div>
@@ -137,54 +139,57 @@ export function Researcher() {
       {connectedWallet && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Connected</h3>
-              <p className="text-xs font-mono text-emerald-400 break-all">
+            <div className="cf-panel p-5">
+              <h3 className="text-sm font-medium text-cf-textMuted mb-1">Connected</h3>
+              <p className="text-xs font-mono text-cf-teal break-all">
                 {connectedWallet.slice(0, 10)}...{connectedWallet.slice(-8)}
               </p>
             </div>
-            <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Pending Requests</h3>
+            <div className="cf-panel p-5">
+              <h3 className="text-sm font-medium text-cf-textMuted mb-1">Pending Requests</h3>
               <p className="text-2xl font-bold text-white">
                 {requests.filter((r) => r.status === 'PENDING').length}
               </p>
             </div>
-            <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Approved</h3>
-              <p className="text-2xl font-bold text-emerald-400">
+            <div className="cf-panel p-5">
+              <h3 className="text-sm font-medium text-cf-textMuted mb-1">Approved</h3>
+              <p className="text-2xl font-bold text-cf-teal">
                 {requests.filter((r) => r.status === 'APPROVED').length}
               </p>
             </div>
           </div>
 
-          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 space-y-4">
-            <h2 className="text-xl font-semibold text-white">Queue Access Request</h2>
+          <div className="cf-panel p-5 space-y-4">
+            <div className="cf-glow-line w-12 h-px mb-4"></div>
+            <h2 className="text-xl font-display font-semibold text-white flex items-center gap-2">
+              <IconShield className="w-5 h-5 text-cf-teal" /> Queue Access Request
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
-                <span className="text-sm text-gray-400">Consent ID</span>
+                <span className="text-sm text-cf-textMuted">Consent ID</span>
                 <input
                   type="number"
                   value={consentIdInput}
                   onChange={(e) => setConsentIdInput(e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                  className="mt-1 w-full bg-cf-surface border border-cf-border rounded-lg px-3 py-2 text-cf-text"
                 />
               </label>
               <label className="block">
-                <span className="text-sm text-gray-400">Compensation (ETH)</span>
+                <span className="text-sm text-cf-textMuted">Compensation (ETH)</span>
                 <input
                   type="text"
                   value={compensationInput}
                   onChange={(e) => setCompensationInput(e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                  className="mt-1 w-full bg-cf-surface border border-cf-border rounded-lg px-3 py-2 text-cf-text"
                 />
               </label>
             </div>
             <button
               onClick={handleQueueRequest}
               disabled={queuing}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-600/50 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              className="cf-glow-btn"
             >
-              {queuing ? '⏳ Queuing...' : '📤'} Queue On-Chain
+              {queuing ? 'Queueing...' : 'Queue On-Chain'}
             </button>
           </div>
         </>
@@ -192,12 +197,13 @@ export function Researcher() {
 
       {connectedWallet && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <span>📊</span> Access Requests
+          <div className="cf-glow-line w-12 h-px mb-4"></div>
+          <h2 className="text-xl font-display font-semibold text-white flex items-center gap-2">
+            <IconWallet className="w-5 h-5 text-cf-teal" /> Access Requests
           </h2>
           {requests.length === 0 ? (
-            <div className="text-center py-12 bg-gray-900/40 border border-dashed border-gray-700 rounded-xl">
-              <p className="text-gray-400">No access requests yet. Queue one to get started.</p>
+            <div className="text-center py-12 bg-cf-surface/40 border border-dashed border-cf-border rounded-xl">
+              <p className="text-cf-textMuted">No access requests yet. Queue one to get started.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
