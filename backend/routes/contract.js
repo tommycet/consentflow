@@ -212,11 +212,33 @@ router.post(
     );
     const receipt = await tx.wait();
 
+    // Step 3 (optional) — pay compensation in aUSDC instead of raw ETH.
+    let atokenCompensation = null;
+    if (b.compensateInAtoken && ccpPassed) {
+      try {
+        const { transferAtoken } = require('../src/cva-token');
+        const compensationAmount = b.atokenCompensationAmount;
+        if (!compensationAmount) {
+          return fail(res, 'body.atokenCompensationAmount is required when compensateInAtoken is true');
+        }
+        const compTx = await transferAtoken(address, String(compensationAmount));
+        const compReceipt = await compTx.wait();
+        atokenCompensation = {
+          txHash: compReceipt.hash,
+          amount: String(compensationAmount),
+          token: process.env.ATOKEN_ADDRESS || config.defaultAtoken,
+        };
+      } catch (e) {
+        return fail(res, `aUSDC compensation transfer failed: ${e.message}`, 502);
+      }
+    }
+
     return ok(res, {
       requestId: rid.value,
       ccpPassed,
       txHash: receipt.hash,
       cleanverseRaw: result,
+      atokenCompensation,
     });
   })
 );
