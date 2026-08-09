@@ -44,3 +44,5 @@ demo/__pycache__/
 out/
 cache/
 broadcast/*/31337/
+.vercel
+.env*
