@@ -71,10 +71,10 @@ router.post(
       address,
       0, // consentId placeholder — the contract may map it; pass 0 if unused
       fixtureHash,
-      b.studyId,
-      b.purposeHash,
-      b.policyVersion,
-      BigInt(Math.floor(Number(b.expiresAt) || 0))
+      study.value,
+      purpose.value,
+      policy.value,
+      BigInt(ts.value)
     );
     const receiptReceipt = await receiptTx.wait();
     // The issue() event ReceiptIssued(receiptId, cviRecordId, owner, ...) gives us receiptId.
@@ -84,11 +84,11 @@ router.post(
 
     // 2. Create the consent, forwarding the optional receiptData.
     const createTx = await registry.createConsent(
-      b.cviAttestationHash,
-      b.studyId,
-      b.purposeHash,
-      b.policyVersion,
-      BigInt(Math.floor(Number(b.expiresAt) || 0)),
+      cvi.value,
+      study.value,
+      purpose.value,
+      policy.value,
+      BigInt(ts.value),
       b.receiptData || '0x'
     );
     const createReceipt = await createTx.wait();
@@ -154,7 +154,7 @@ router.post(
 
     return ok(res, {
       requestId: requestId ?? null,
-      consentId: Number(b.consentId),
+      consentId: cid.value,
       researcher,
       txHash: receipt.hash,
     });
@@ -213,7 +213,7 @@ router.post(
     const receipt = await tx.wait();
 
     return ok(res, {
-      requestId: Number(b.requestId),
+      requestId: rid.value,
       ccpPassed,
       txHash: receipt.hash,
       cleanverseRaw: result,
@@ -333,54 +333,42 @@ router.get(
       totalConsents: 0,
       activeConsents: 0,
       revokedConsents: 0,
-      expiredConsents: 0,
       totalRequests: 0,
       approvedRequests: 0,
       rejectedRequests: 0,
-      pendingRequests: 0,
-      totalCompensation: '0',
-      byStudy: {},
+      totalCompensationVolume: '0',
     };
 
+    let compensationWei = 0n;
+
     for (const evt of events) {
+      const a = evt.args;
       switch (evt.type) {
         case 'ConsentCreated':
           stats.totalConsents++;
           stats.activeConsents++;
           break;
         case 'ConsentRevoked':
-          stats.activeConsents--;
+          stats.totalConsents++;
           stats.revokedConsents++;
-          break;
-        case 'ConsentExpired':
-          stats.activeConsents--;
-          stats.expiredConsents++;
+          stats.activeConsents = Math.max(0, stats.activeConsents - 1);
           break;
         case 'AccessRequested':
           stats.totalRequests++;
-          stats.pendingRequests++;
-          if (evt.args.compensation) {
-            stats.totalCompensation = (
-              BigInt(stats.totalCompensation) + BigInt(evt.args.compensation)
-            ).toString();
-          }
-          const studyKey = evt.args.studyId || 'unknown';
-          if (!stats.byStudy[studyKey]) {
-            stats.byStudy[studyKey] = { consents: 0, requests: 0, compensation: '0' };
-          }
-          stats.byStudy[studyKey].requests++;
+          try { compensationWei += BigInt(a.compensation || '0'); } catch {}
           break;
         case 'AccessApproved':
-          stats.pendingRequests--;
           stats.approvedRequests++;
           break;
         case 'AccessRejected':
-          stats.pendingRequests--;
           stats.rejectedRequests++;
+          break;
+        default:
           break;
       }
     }
 
+    stats.totalCompensationVolume = compensationWei.toString();
     return ok(res, stats);
   })
 );
