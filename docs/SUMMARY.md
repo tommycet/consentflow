@@ -6,6 +6,17 @@ Clinical trials lack participant-controlled, revocable consent on-chain. Institu
 ## Solution
 ConsentFlow is a patient-controlled consent rail built on the Cleanverse compliance stack. It turns revocation into a verifiable on-chain event and gives researchers an auditable settlement path that cannot proceed if consent has been withdrawn.
 
+## Target Users
+- **Clinical trial participants** — patients who want granular, revocable control over how their data is used, with on-chain proof of consent withdrawal
+- **Clinical researchers** — institutions that need auditable, compliance-gated access to participant data with automatic compensation settlement
+- **IRB / compliance officers** — auditors who need a unified trail of consent events, CVI status changes, and settlement records
+
+## Roadmap
+- **Phase 1 (Complete)** — Solidity contracts, backend adapter, frontend, 55+ tests, CI/CD, Docker
+- **Phase 2** — Monad testnet deployment, live demo with real Cleanverse API calls
+- **Phase 3** — Mainnet deployment, multi-study support, ERC-712 typed data signatures
+- **Phase 4** — Cross-chain consent portability via Chainlink CCIP, DAO-governed policy updates
+
 ## Cleanverse Integration
 
 | Cleanverse Primitive | ConsentFlow Role |

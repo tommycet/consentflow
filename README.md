@@ -137,12 +137,67 @@ npm run dev
 
 ---
 
-## Links
+## Testing
 
-- **Hackathon**: [Cleanverse Trusted Assets Hackathon](https://cleanverse.ai)
-- **Repository**: `https://github.com/consentflow/consentflow`
-- **Chain Explorer (Monad)**: `https://testnet.monadexplorer.com`
+```bash
+# Run all tests (Solidity + Backend)
+make test-all
+
+# Or individually
+forge test          # 55 Solidity tests (unit + fuzz + invariant)
+cd backend && npm test  # 10 backend integration tests
+```
+
+| Suite | Tests | Type |
+|-------|-------|------|
+| AccessControl | 5 | Unit |
+| BatchCreate | 4 | Unit |
+| BatchSettle | 3 | Unit |
+| ConsentRegistry | 5 | Unit |
+| ConsentRegistryFuzz | 7 | Fuzz (256 runs each) |
+| ConsentRegistryInvariant | 4 | Stateful invariant |
+| ConsentRevocation | 6 | Unit |
+| ContributionReceipt | 6 | Unit |
+| EndToEndLifecycle | 1 | Integration |
+| ExpireConsent | 5 | Unit |
+| Pausable | 4 | Unit |
+| QueryIndexes | 4 | Unit |
+| Reentrancy | 1 | Security |
+| Backend API | 10 | Integration |
+| **Total** | **65** | |
 
 ---
 
-*Built for the Cleanverse Trusted Assets Hackathon — Monad Testnet, August 2025.*
+## Security
+
+- [Security Audit](docs/SECURITY_AUDIT.md) — 0 CRITICAL, 0 HIGH, 2 MEDIUM, 3 LOW, 4 INFO
+- `ReentrancyGuard` on all ETH-transferring functions
+- `Ownable` + `Pausable` for emergency stop
+- Custom errors for gas-efficient reverts
+- Backend: rate limiting, input validation, no PII in logs
+
+---
+
+## Target Users
+
+- **Clinical trial participants** — granular, revocable consent control with on-chain proof
+- **Clinical researchers** — compliance-gated data access with automatic compensation
+- **IRB / compliance officers** — unified audit trail of consent events
+
+---
+
+## Roadmap
+
+- **Phase 1 (Complete)** — Contracts, backend, frontend, 65 tests, CI/CD, Docker
+- **Phase 2** — Monad testnet deployment, live demo
+- **Phase 3** — Mainnet, multi-study support, ERC-712 signatures
+- **Phase 4** — Cross-chain consent portability via CCIP, DAO-governed policies
+
+---
+
+## Links
+
+- **Hackathon**: Cleanverse Trusted Assets Hackathon (Aug 8-9, 2026)
+- **Track**: Track 2 (DeFi) — CVI + CVA integration
+- **Chain**: Monad Testnet (Chain ID 10143)
+- **License**: MIT
