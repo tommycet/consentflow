@@ -49,6 +49,7 @@ ConsentFlow is a patient-controlled consent rail built on the Cleanverse complia
 | Fuzz/property tests (256 runs each) | ✓ | — | 7 tests |
 | End-to-end lifecycle integration test | ✓ | — | 1 test |
 | Unified verification endpoint (on-chain + CVI + receipt) | — | ✓ | 1 test |
+| Multi-step policy engine (CVI + CVA + receipt + consent + expiry) | ✓ | ✓ | 1 test |
 | Event indexer + on-chain audit trail | — | ✓ | — |
 | Webhook subscriptions | — | ✓ | 1 test |
 | Rate limiting (100/15min general, 10/min writes) | — | ✓ | ✓ |
