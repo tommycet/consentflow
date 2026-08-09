@@ -29,6 +29,7 @@ ConsentFlow is a patient-controlled consent rail built on the Cleanverse complia
 | Consent lifecycle (create, revoke, expire) | ✓ | ✓ | 17 tests |
 | Access request + CCP settlement | ✓ | ✓ | 8 tests |
 | Batch settle (gas optimization) | ✓ | ✓ | 3 tests |
+| Batch create consent (enroll N participants in 1 tx) | ✓ | — | 4 tests |
 | Auto-expiry (permissionless) | ✓ | — | 5 tests |
 | Queryable indexes (by participant, researcher, consent) | ✓ | ✓ | 4 tests |
 | Emergency pause/unpause (Pausable, onlyOwner) | ✓ | — | 4 tests |
@@ -46,10 +47,10 @@ ConsentFlow is a patient-controlled consent rail built on the Cleanverse complia
 | CI/CD pipeline (GitHub Actions) | — | ✓ | — |
 
 ## Test Results
-- **51 Solidity tests pass** (unit + fuzz + invariant, `forge test -vv`)
+- **55 Solidity tests pass** (unit + fuzz + invariant + batch + E2E, `forge test -vv`)
 - **10 backend integration tests pass** (`node test/api.test.js`)
 - **5/5 Cleanverse sandbox API live tests pass** (enrollment, status check, revocation, CCP compliance, settlement)
-- **Total: 66 tests, all passing**
+- **Total: 70 tests, all passing**
 
 ## Scalability
 - **Batch settle** — settles N requests in a single transaction, amortizing gas overhead
