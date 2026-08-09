@@ -16,6 +16,7 @@ interface IConsentRegistry {
         bytes32 studyId;
         bytes32 purposeHash;
         bytes32 policyVersion;
+        // ── Packed slot: createdAt(64) | expiresAt(64) | revokedAt(64) | status(8) = 200 bits ──
         uint64 createdAt;
         uint64 expiresAt;
         uint64 revokedAt;

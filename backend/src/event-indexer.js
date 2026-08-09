@@ -13,6 +13,7 @@
  */
 
 const { getProvider, getConsentRegistry, RPC_URL } = require('./ethers-provider');
+const { recordAudit } = require('./audit-trail');
 
 // ---- in-memory store ----
 const events = [];
@@ -165,6 +166,7 @@ async function ingestRange(registry, fromBlock, toBlock) {
     const decoded = decodeLog(log);
     if (decoded) {
       events.push(decoded);
+      recordAudit('on-chain', decoded.type, decoded.args, decoded.txHash);
     }
   }
 }

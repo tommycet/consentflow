@@ -212,6 +212,26 @@ router.post(
     );
     const receipt = await tx.wait();
 
+    // Webhook + audit: notify subscribers if CCP failed.
+    if (!ccpPassed && req.webhook && req.webhook.emit) {
+      req.webhook.emit('CCP_RESULT', {
+        requestId: rid.value,
+        wallet: address,
+        atoken,
+        allowed: false,
+        meaning: 'COMPLIANCE_FAILED',
+        txHash: receipt.hash,
+      }).catch(() => {});
+    }
+
+    const { recordAudit } = require('../src/audit-trail');
+    recordAudit('on-chain', 'AccessSettled', {
+      requestId: rid.value,
+      ccpPassed,
+      txHash: receipt.hash,
+      wallet: address,
+    });
+
     // Step 3 (optional) — pay compensation in aUSDC instead of raw ETH.
     let atokenCompensation = null;
     if (b.compensateInAtoken && ccpPassed) {

@@ -10,6 +10,7 @@ const { Router } = require('express');
 const { postEncrypted, postPlain } = require('../src/cleanverse');
 const { config } = require('../src/config');
 const { ok, fail, normalizeAddress, wrap } = require('../src/handlers');
+const { recordAudit } = require('../src/audit-trail');
 
 const router = Router();
 
@@ -56,6 +57,12 @@ router.post(
 
     const result = await postEncrypted('/generate_apass', payload);
     if (result.code === '0000') {
+      recordAudit('cleanverse', 'CVI_GENERATE', {
+        wallet: address,
+        cvRecordId: result.data && result.data.cvRecordId,
+        tier: result.data && result.data.tier,
+        request: payload,
+      });
       return ok(res, { ...result.data, request: payload });
     }
     return fail(res, result.message || `generate_apass failed (code ${result.code})`, 502);
@@ -117,6 +124,11 @@ async function updateStatus(res, address, status, body) {
 
   const result = await postEncrypted('/update_status', payload);
   if (result.code === '0000') {
+    recordAudit('cleanverse', status === '2' ? 'CVI_FROZEN' : 'CVI_UNFROZEN', {
+      wallet: address,
+      cvRecordId: result.data && result.data.cvRecordId,
+      requestedStatus: status,
+    });
     return ok(res, { ...result.data, requestedStatus: status, wallet: address });
   }
   return fail(res, result.message || `update_status failed (code ${result.code})`, 502);

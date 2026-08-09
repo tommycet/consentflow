@@ -30,6 +30,15 @@ app.use('/api/ccp', require('./routes/ccp'));
 // Contract routes — general limit applied here; write limit applied inside router.
 app.use('/api/contract', generalLimiter, require('./routes/contract'));
 
+// Webhook callback system.
+const { router: webhookRouter, emit: emitWebhook } = require('./src/webhook');
+app.use('/api/webhook', generalLimiter, webhookRouter);
+app.use((req, res, next) => { req.webhook = { emit: emitWebhook }; next(); });
+
+// Unified audit trail.
+const { router: auditRouter } = require('./src/audit-trail');
+app.use('/api/audit', generalLimiter, auditRouter);
+
 // Health check — used by test-adapter and CI.
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -39,6 +48,7 @@ app.get('/api/health', (_req, res) => {
       cleanverseConfigured: Boolean(config.apiId && config.apiKey),
       baseUrl: config.baseUrl,
       chain: config.chain,
+      webhookSubscriptions: emitWebhook ? 'loaded' : 'n/a',
     },
   });
 });

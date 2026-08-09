@@ -11,6 +11,7 @@ const { Router } = require('express');
 const { postPlain } = require('../src/cleanverse');
 const { config } = require('../src/config');
 const { ok, fail, normalizeAddress, wrap } = require('../src/handlers');
+const { recordAudit } = require('../src/audit-trail');
 
 const router = Router();
 
@@ -42,6 +43,13 @@ router.post(
     if (result.code === '0000' && result.data) {
       const vcode = result.data.code ?? result.data.status;
       const meaning = CODE_TO_MEANING[vcode] || `UNKNOWN(${vcode})`;
+      recordAudit('cleanverse', 'CCP_RESULT', {
+        wallet: address,
+        atoken,
+        code: vcode,
+        meaning,
+        allowed: vcode === 4,
+      });
       return ok(res, {
         code: vcode,
         meaning,
@@ -56,6 +64,13 @@ router.post(
     // still carries the CCP decision — surface it, don't drop it.
     if (result.code === '0002' || result.message) {
       const failed = /compliancefailed|frozen|expired/i.test(result.message || '');
+      recordAudit('cleanverse', 'CCP_RESULT', {
+        wallet: address,
+        atoken,
+        code: result.code,
+        meaning: failed ? 'COMPLIANCE_FAILED' : 'BUSINESS_FAILURE',
+        allowed: false,
+      });
       return ok(res, {
         code: result.code,
         meaning: failed ? 'COMPLIANCE_FAILED' : 'BUSINESS_FAILURE',

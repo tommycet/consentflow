@@ -218,17 +218,28 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         if (r.researcher != msg.sender) revert NotResearcher(requestId, msg.sender);
         if (r.expiresAt <= block.timestamp) revert RequestIsExpired(requestId);
 
-        Consent storage c = consents[r.consentId];
-        if (c.status != ConsentStatus.ACTIVE) revert ConsentNotActive(r.consentId);
-        if (c.expiresAt <= block.timestamp) revert ConsentIsExpired(r.consentId);
-        if (!contributionReceipt.isValid(r.receiptId)) revert ReceiptInvalid(r.receiptId);
+        // Cache consent fields to avoid redundant SLOADs
+        uint256 cReceiptId = r.receiptId;
+        uint256 cConsentId = r.consentId;
+        address cParticipant;
 
+        {
+            Consent storage c = consents[cConsentId];
+            if (c.status != ConsentStatus.ACTIVE) revert ConsentNotActive(cConsentId);
+            if (c.expiresAt <= block.timestamp) revert ConsentIsExpired(cConsentId);
+            cParticipant = c.participant;
+        }
+
+        // External call last (CEI pattern — though nonReentrant already guards)
+        if (!contributionReceipt.isValid(cReceiptId)) revert ReceiptInvalid(cReceiptId);
+
+        uint256 comp = r.compensation;
         if (ccpPassed) {
             r.status = RequestStatus.APPROVED;
             emit AccessApproved(requestId, msg.sender);
 
-            if (r.compensation > 0) {
-                (bool sent, ) = payable(c.participant).call{value: r.compensation}("");
+            if (comp > 0) {
+                (bool sent, ) = payable(cParticipant).call{value: comp}("");
                 if (!sent) revert CompensationTransferFailed(requestId);
             }
         } else {
@@ -236,8 +247,8 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
             r.rejectionCode = RejectionCode.CVI_REVOKED;
             emit AccessRejected(requestId, r.rejectionCode);
 
-            if (r.compensation > 0) {
-                (bool sent, ) = payable(r.researcher).call{value: r.compensation}("");
+            if (comp > 0) {
+                (bool sent, ) = payable(r.researcher).call{value: comp}("");
                 if (!sent) revert CompensationRefundFailed(requestId);
             }
         }
