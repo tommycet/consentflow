@@ -1,13 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-// ─── Wallet Connect Hook ───────────────────────────────────────────
+const DEMO_FAUCET_KEY = 'fd17291e63a2f4865e4a1340ca60ec23b54977ffb8c8bed1b49edf66bb2f05c7';
 
 export interface WalletState {
   address: string | null;
   provider: ethers.BrowserProvider | null;
-  signer: ethers.JsonRpcSigner | null;
+  signer: ethers.JsonRpcSigner | ethers.Wallet | null;
   chainId: number | null;
+  isDemoWallet?: boolean;
 }
 
 export function useWallet() {
@@ -16,13 +17,35 @@ export function useWallet() {
     provider: null,
     signer: null,
     chainId: null,
+    isDemoWallet: false,
   });
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const connectDemo = useCallback(async () => {
+    setConnecting(true);
+    setError(null);
+    try {
+      const jsonRpcProvider = new ethers.JsonRpcProvider('https://testnet-rpc.monad.xyz');
+      const demoSigner = new ethers.Wallet(DEMO_FAUCET_KEY, jsonRpcProvider);
+      const network = await jsonRpcProvider.getNetwork();
+      setWallet({
+        address: demoSigner.address,
+        provider: null,
+        signer: demoSigner,
+        chainId: Number(network.chainId),
+        isDemoWallet: true,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to connect showcase wallet');
+    } finally {
+      setConnecting(false);
+    }
+  }, []);
+
   const connect = useCallback(async () => {
     if (!window.ethereum) {
-      setError('MetaMask not detected. Please install MetaMask.');
+      setError('MetaMask not detected. Please install MetaMask or use the Demo Showcase Wallet.');
       return;
     }
     setConnecting(true);
@@ -37,6 +60,7 @@ export function useWallet() {
         provider,
         signer,
         chainId: Number(network.chainId),
+        isDemoWallet: false,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect wallet');
@@ -46,13 +70,11 @@ export function useWallet() {
   }, []);
 
   const disconnect = useCallback(() => {
-    setWallet({ address: null, provider: null, signer: null, chainId: null });
+    setWallet({ address: null, provider: null, signer: null, chainId: null, isDemoWallet: false });
   }, []);
 
-  return { wallet, connecting, error, connect, disconnect };
+  return { wallet, connecting, error, connect, connectDemo, disconnect };
 }
-
-// ─── WalletConnect Component ────────────────────────────────────────
 
 export interface WalletConnectProps {
   className?: string;
@@ -61,24 +83,22 @@ export interface WalletConnectProps {
 }
 
 export function WalletConnect({ className = '', connectLabel = 'Connect MetaMask', onConnected }: WalletConnectProps) {
-  const { wallet, connecting, error, connect, disconnect } = useWallet();
+  const { wallet, connecting, error, connect, connectDemo, disconnect } = useWallet();
 
-  // Notify parent when wallet connects
-  const handleConnect = useCallback(async () => {
-    await connect();
-  }, [connect]);
-
-  // Fire onConnected callback after address changes
+  // Expose the live signer so pages can send real transactions with the
+  // connected account (showcase wallet or MetaMask), then notify the parent.
   useEffect(() => {
-    if (wallet.address && onConnected) {
-      onConnected(wallet.address);
+    if (wallet.address) {
+      (window as unknown as { __wallet?: unknown }).__wallet = wallet.signer;
+      if (onConnected) onConnected(wallet.address);
     }
-  }, [wallet.address, onConnected]);
+  }, [wallet.address, wallet.signer, onConnected]);
 
   if (wallet.address) {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
-        <div className="px-4 py-2 rounded-lg bg-emerald-900/30 border border-emerald-700 text-emerald-300 text-sm font-mono">
+        <div className="px-4 py-2 rounded-lg bg-emerald-900/30 border border-emerald-700 text-emerald-300 text-sm font-mono flex items-center gap-2">
+          {wallet.isDemoWallet && <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" title="Showcase Wallet"></span>}
           {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
         </div>
         {wallet.chainId && wallet.chainId !== 10143 && (
@@ -96,13 +116,22 @@ export function WalletConnect({ className = '', connectLabel = 'Connect MetaMask
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <button
-        onClick={connect}
-        disabled={connecting}
-        className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium transition shadow-lg shadow-emerald-900/30"
-      >
-        {connecting ? 'Connecting…' : connectLabel}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={connect}
+          disabled={connecting}
+          className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium transition shadow-lg shadow-emerald-900/30"
+        >
+          {connecting ? 'Connecting…' : connectLabel}
+        </button>
+        <button
+          onClick={connectDemo}
+          disabled={connecting}
+          className="px-4 py-2.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-800 text-cyan-300 text-sm font-medium transition"
+        >
+          Use Showcase Wallet
+        </button>
+      </div>
       {error && <span className="text-red-400 text-xs">{error}</span>}
     </div>
   );

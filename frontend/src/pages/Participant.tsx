@@ -120,8 +120,6 @@ export function Participant() {
 
   const handleConnected = useCallback((wallet: string) => {
     setConnectedWallet(wallet);
-    const signer = ethers.Wallet.createRandom();
-    (window as any).__wallet = signer;
   }, []);
 
   return (

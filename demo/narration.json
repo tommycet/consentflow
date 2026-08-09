@@ -1,0 +1,10 @@
+[
+  {"id": "01_hero", "text": "ConsentFlow is a clinical trial consent rail where the patient stays in control. Instead of a signed PDF locked in a sponsor's filing cabinet, consent becomes a live on-chain state that a participant can grant, scope, and revoke at any time."},
+  {"id": "02_arch", "text": "The architecture runs on Monad testnet, chain ID ten one four three. A participant's identity is verified through Cleanverse identity, their consent is recorded in the ConsentRegistry contract, and every data contribution mints a receipt token."},
+  {"id": "03_evidence", "text": "This is not a mockup. Two contracts are deployed and verified, backed by fifty five Solidity tests and ten backend integration tests. An independent Prism audit found eleven issues, and all eleven were fixed."},
+  {"id": "04_participant", "text": "Here is the participant view. To make this demo instant, we embedded a showcase wallet already funded on Monad testnet. One click connects it, no browser extension and no faucet trip required."},
+  {"id": "05_consent", "text": "The participant picks a study and a purpose. ConsentFlow hashes the study identifier and the purpose string, so the chain stores a verifiable commitment rather than the clinical text itself. That same record can be revoked later by the participant alone."},
+  {"id": "06_researcher", "text": "Now the researcher side. A researcher queues a compensated access request against a specific purpose. The Cleanverse compliance processor is the final gate, and it returns a numeric code that either authorizes the transfer or blocks it."},
+  {"id": "07_audit", "text": "Every consent grant, revocation, and access decision lands in the audit view. Because the state transitions are on-chain, a regulator or an ethics board can reconstruct exactly who approved what, and when."},
+  {"id": "08_docs", "text": "The docs page carries the full technical surface: contract addresses, the identity, asset, and compliance endpoints, the test matrix, and the security posture. ConsentFlow fails closed, and it always leaves evidence."}
+]

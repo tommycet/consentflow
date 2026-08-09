@@ -1,0 +1,7 @@
+*.cap/
+cap-export*.mp4
+frames/
+audio/
+narration.m4a
+concat.txt
+__pycache__/
