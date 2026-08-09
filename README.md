@@ -3,6 +3,17 @@
 
 ConsentFlow turns consent into a verifiable on-chain rail. Patients enroll via Cleanverse CVI (A-Pass), researchers queue data-access requests, and a single revocation freezes the entire consent state — blocking settlement and refunding compensation automatically.
 
+| | |
+| --- | --- |
+| Live app | https://consentflow-six.vercel.app |
+| One-page summary | [SUMMARY.md](./SUMMARY.md) |
+| Chain | Monad testnet (chain ID 10143) |
+| ConsentRegistry | `0xE64495D37859cF5fC0629023146764D5c01208c0` |
+| ContributionReceipt | `0x57EB95F57bBA38aABE9f29d26395BCA74Ab28c84` |
+
+Judges can try it without a wallet extension: open the Participant page and click
+**Use Showcase Wallet**, which connects a pre-funded Monad testnet account.
+
 ---
 
 ## Architecture
