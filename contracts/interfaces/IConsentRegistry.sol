@@ -61,6 +61,8 @@ interface IConsentRegistry {
     event AccessRejected(uint256 indexed requestId, RejectionCode indexed code);
     event BatchSettled(uint256[] requestIds, RequestStatus[] results);
     event RequestExpired(uint256 indexed requestId);
+    event Paused(address account);
+    event Unpaused(address account);
 
     function createConsent(
         bytes32 cviAttestationHash,
