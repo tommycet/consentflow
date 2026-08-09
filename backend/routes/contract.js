@@ -560,4 +560,42 @@ router.get(
   })
 );
 
+// ── Policy Engine endpoint ───────────────────────────────────
+// GET /policy/run/:requestId?wallet=0x...
+// Runs all policy checks (CVI + CVA + receipt + consent status) and returns results.
+router.get('/policy/run/:requestId', async (req, res) => {
+  try {
+    const requestId = parseInt(req.params.requestId, 10);
+    const wallet = req.query.wallet;
+
+    if (!requestId || !wallet) {
+      return res.status(400).json({
+        success: false,
+        error: 'requestId (path) and wallet (query) are required',
+      });
+    }
+
+    const { runPolicyChecks } = require('../src/policy-engine');
+    const result = await runPolicyChecks(requestId, wallet);
+
+    return res.json({
+      success: true,
+      data: {
+        requestId,
+        wallet,
+        overall: result.overall,
+        reasonCode: result.reasonCode,
+        checks: result.checks,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error('[policy] Error:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Policy engine error: ' + err.message,
+    });
+  }
+});
+
 module.exports = router;

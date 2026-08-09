@@ -146,11 +146,26 @@ function getContributionReceipt() {
   return _contributionReceipt;
 }
 
+let _cvaToken = null;
+function getCvaToken() {
+  if (!_cvaToken) {
+    const address = requireEnv('ATOKEN_ADDRESS', ATOKEN_ADDRESS);
+    // Minimal ERC-20 ABI for balance check
+    const erc20Abi = [
+      'function balanceOf(address account) external view returns (uint256)',
+      'function decimals() external view returns (uint8)',
+    ];
+    _cvaToken = new ethers.Contract(address, erc20Abi, getWallet());
+  }
+  return _cvaToken;
+}
+
 module.exports = {
   getProvider,
   getWallet,
   getConsentRegistry,
   getContributionReceipt,
+  getCvaToken,
   loadAbi,
   RPC_URL,
 };
