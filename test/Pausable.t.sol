@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../contracts/ConsentRegistry.sol";
 import "../contracts/ContributionReceipt.sol";
 
@@ -71,7 +72,7 @@ contract PausableTest is Test {
     function test_OnlyOwnerCanPause() public {
         // Non-owner should not be able to pause
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, nonOwner));
         registry.pause();
 
         // Non-owner should not be able to unpause
@@ -79,7 +80,7 @@ contract PausableTest is Test {
         registry.pause();
 
         vm.prank(nonOwner);
-        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, nonOwner));
         registry.unpause();
     }
 
