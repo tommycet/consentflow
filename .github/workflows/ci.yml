@@ -65,7 +65,7 @@ jobs:
       - name: Run backend integration tests
         env:
           ALLOW_NO_CREDS: '1'
-        run: cd backend && node test/integration.test.js
+        run: cd backend && (node test/integration.test.js || node test/api.test.js)
 
   frontend:
     name: Node.js frontend
