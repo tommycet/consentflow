@@ -3,32 +3,10 @@ pragma solidity ^0.8.24;
 
 /// @title IConsentRegistry
 /// @notice Participant-owned consent and access-request state machine.
-/// @dev Implementations must keep revocation terminal and expose only opaque hashes.
 interface IConsentRegistry {
-    enum ConsentStatus {
-        NONE,
-        ACTIVE,
-        REVOKED
-    }
-
-    enum RequestStatus {
-        PENDING,
-        APPROVED,
-        REJECTED
-    }
-
-    enum RejectionCode {
-        NONE,
-        CVI_REVOKED,
-        CVA_REVOKED,
-        CVI_UNKNOWN,
-        CVA_UNKNOWN,
-        EXPIRED,
-        PURPOSE_MISMATCH,
-        STUDY_MISMATCH,
-        POLICY_UNSUPPORTED,
-        ALREADY_SETTLED
-    }
+    enum ConsentStatus { NONE, ACTIVE, REVOKED }
+    enum RequestStatus { PENDING, APPROVED, REJECTED }
+    enum RejectionCode { NONE, CVI_REVOKED, CVA_REVOKED, EXPIRED, PURPOSE_MISMATCH, STUDY_MISMATCH, POLICY_UNSUPPORTED }
 
     struct Consent {
         uint256 consentId;
@@ -68,11 +46,7 @@ interface IConsentRegistry {
         bytes32 policyVersion,
         uint64 expiresAt
     );
-    event ConsentRevoked(
-        uint256 indexed consentId,
-        address indexed participant,
-        uint64 revokedAt
-    );
+    event ConsentRevoked(uint256 indexed consentId, address indexed participant, uint64 revokedAt);
     event AccessRequested(
         uint256 indexed requestId,
         uint256 indexed consentId,
@@ -82,10 +56,7 @@ interface IConsentRegistry {
         uint64 expiresAt
     );
     event AccessApproved(uint256 indexed requestId, address indexed researcher);
-    event AccessRejected(
-        uint256 indexed requestId,
-        RejectionCode indexed code
-    );
+    event AccessRejected(uint256 indexed requestId, RejectionCode indexed code);
 
     function createConsent(
         bytes32 cviAttestationHash,
@@ -105,20 +76,11 @@ interface IConsentRegistry {
         uint64 expiresAt
     ) external payable returns (uint256 requestId);
 
-    /// @notice Runs CCP atomically; approval may release `compensation`.
-    function settleAccessRequest(uint256 requestId) external;
-
-    /// @notice Records a failed CCP result without granting access or payment.
-    function rejectAccessRequest(
-        uint256 requestId,
-        RejectionCode code
-    ) external;
+    /// @param ccpPassed True if the Cleanverse verify_apass/API check passed.
+    /// @param reasonCode Off-chain reason code / hash for rejection context.
+    function settleAccessRequest(uint256 requestId, bool ccpPassed, bytes32 reasonCode) external;
 
     function getConsent(uint256 consentId) external view returns (Consent memory);
-
-    function getAccessRequest(
-        uint256 requestId
-    ) external view returns (AccessRequest memory);
-
+    function getAccessRequest(uint256 requestId) external view returns (AccessRequest memory);
     function consentStatus(uint256 consentId) external view returns (ConsentStatus);
 }

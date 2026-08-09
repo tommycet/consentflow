@@ -2,19 +2,15 @@
 pragma solidity ^0.8.24;
 
 /// @title IContributionReceipt
-/// @notice Purpose-bound, wallet-locked CVA receipt representing one consent's data contribution.
-/// @dev Non-transferable. Commits to fixtureHash only — no health payload, URI, or PII.
+/// @notice Purpose-bound, wallet-locked CVA receipt.
 interface IContributionReceipt {
-    enum ReceiptStatus {
-        ACTIVE,
-        REVOKED
-    }
+    enum ReceiptStatus { NONE, ACTIVE, REVOKED }
 
     struct Receipt {
         uint256 receiptId;
         uint256 consentId;
         address participant;
-        bytes32 fixtureHash;   // hash of synthetic fixture; never a real data hash
+        bytes32 fixtureHash;
         bytes32 studyId;
         bytes32 purposeHash;
         bytes32 policyVersion;
@@ -41,8 +37,6 @@ interface IContributionReceipt {
         uint64 revokedAt
     );
 
-    /// @notice Mint a receipt for a newly created consent.
-    /// @dev Callable only by the ConsentRegistry.
     function issue(
         address participant,
         uint256 consentId,
@@ -53,13 +47,9 @@ interface IContributionReceipt {
         uint64 expiresAt
     ) external returns (uint256 receiptId);
 
-    /// @notice Revoke a receipt, triggered by ConsentRegistry on consent revocation.
-    /// @dev Only the ConsentRegistry may call this. Terminal; status cannot return to ACTIVE.
     function revoke(uint256 receiptId) external;
 
     function getReceipt(uint256 receiptId) external view returns (Receipt memory);
-
     function isValid(uint256 receiptId) external view returns (bool);
-
     function receiptStatus(uint256 receiptId) external view returns (ReceiptStatus);
 }
