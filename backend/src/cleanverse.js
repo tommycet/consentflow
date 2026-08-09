@@ -64,4 +64,9 @@ async function postRaw(path, body) {
   return parsed;
 }
 
-module.exports = { postEncrypted, postPlain, url, headers };
+/** Get the current Cleanverse configuration (read-only). */
+function getConfig() {
+  return config;
+}
+
+module.exports = { postEncrypted, postPlain, url, headers, getConfig };

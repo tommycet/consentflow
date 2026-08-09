@@ -226,6 +226,7 @@ export function Landing() {
         {tab === 'architecture' && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white">System Architecture</h2>
+            {/* Safe: ARCH_SVG is a compile-time string constant (line 9), not user-derived */}
             <div
               className="bg-consent-bg border border-consent-border rounded-lg p-4"
               dangerouslySetInnerHTML={{ __html: ARCH_SVG }}

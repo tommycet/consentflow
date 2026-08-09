@@ -270,8 +270,12 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     function settleAccessRequest(
         uint256 requestId,
         bool ccpPassed,
-        bytes32 /*ccpReasonCode*/
+        bytes32 ccpReasonCode
     ) external override nonReentrant {
+        // ccpReasonCode is intentionally passed through as off-chain metadata; the on-chain
+        // settlement only needs the boolean ccpPassed. Downstream indexers can read the
+        // reason code from the emitted AccessApproved/AccessRejected event logs or tx calldata.
+        (ccpReasonCode);
         _settle(requestId, ccpPassed);
     }
 
@@ -288,6 +292,7 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
         bool[] calldata ccpResults,
         bytes32[] calldata reasonCodes
     ) external override nonReentrant {
+        if (requestIds.length > 50) revert ArrayLengthMismatch();
         if (requestIds.length != ccpResults.length || requestIds.length != reasonCodes.length)
             revert ArrayLengthMismatch();
 
@@ -329,6 +334,15 @@ contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard
     /// @notice Unpause the registry to restore normal activity.
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /// @notice Withdraw stuck ETH compensation from expired/unsettled requests.
+    /// @dev Only the contract owner can call this. Transfers the full balance to the owner.
+    function withdrawEth() external onlyOwner {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert InvalidAddress(); // reuse existing error for "nothing to withdraw"
+        (bool ok, ) = payable(owner()).call{value: balance}("");
+        if (!ok) revert CompensationRefundFailed(0);
     }
 
     // ── Internal ──────────────────────────────────────────────────

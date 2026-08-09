@@ -49,7 +49,7 @@ export async function getContributionReceiptContract(
   const provider = rpcProvider || getProvider();
   const contractAddress = CONFIG.contract.contributionReceipt;
   if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000') {
-    throw new Error('ContributionReceipt address not configured. Set VITE_CONTIBUTION_RECEIPT_ADDRESS.');
+    throw new Error('ContributionReceipt address not configured. Set VITE_CONTRIBUTION_RECEIPT_ADDRESS.');
   }
 
   const signerOrProvider = wallet || provider;

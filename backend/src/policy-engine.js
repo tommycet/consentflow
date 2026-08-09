@@ -126,9 +126,9 @@ async function runPolicyChecks(requestId, wallet) {
     cvaPassed = balance > 0n;
     cvaDetail = `aUSDC balance: ${ethers.formatUnits(balance, 6)}`;
   } catch (e) {
-    // Skip if contract not deployed
-    cvaPassed = true;
-    cvaDetail = `CVA balance check skipped: ${e.message.slice(0, 100)}`;
+    // Fail-closed: if CVA check errors, reject rather than bypass
+    cvaPassed = false;
+    cvaDetail = `CVA balance check failed: ${e.message.slice(0, 100)}`;
   }
   checks.push({ name: 'cva_balance', passed: cvaPassed, detail: cvaDetail });
   if (!cvaPassed) {
@@ -146,8 +146,8 @@ async function runPolicyChecks(requestId, wallet) {
     receiptPassed = rStatus === 1;
     receiptDetail = `Receipt status: ${rStatus} (expected 1=ACTIVE)`;
   } catch (e) {
-    receiptPassed = true;
-    receiptDetail = `Receipt check skipped: ${e.message.slice(0, 100)}`;
+    receiptPassed = false;
+    receiptDetail = `Receipt check failed: ${e.message.slice(0, 100)}`;
   }
   checks.push({ name: 'receipt_valid', passed: receiptPassed, detail: receiptDetail });
   if (!receiptPassed) {

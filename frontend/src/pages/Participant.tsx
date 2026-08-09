@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { WalletConnect } from '../components/WalletConnect';
 import { ConsentCard } from '../components/ConsentCard';
 import { StatusBadge } from '../components/StatusBadge';
@@ -14,33 +15,35 @@ export function Participant() {
   const [generating, setGenerating] = useState(false);
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [studyIdInput, setStudyIdInput] = useState('Study-001');
+  const [purposeInput, setPurposeInput] = useState('genomic-research');
   const { addToast } = useToasts();
 
   const fetchConsents = useCallback(async () => {
     if (!connectedWallet) return;
     try {
       const contract = await getConsentRegistryContract(null);
-      // For demo, we'll show how to interact with the contract
-      // In a real app, we'd fetch from events
       const consentCount = await contract._consentIds();
       const count = Number(consentCount);
       const fetched: ConsentRecord[] = [];
       for (let i = 1; i <= count; i++) {
         try {
           const consent = await contract.getConsent(i);
-          fetched.push({
-            consentId: String(i),
-            participant: consent.participant,
-            cviAttestationHash: consent.cviAttestationHash,
-            receiptId: consent.receiptId,
-            studyId: consent.studyId,
-            purposeHash: consent.purposeHash,
-            policyVersion: consent.policyVersion,
-            createdAt: String(consent.createdAt),
-            expiresAt: String(consent.expiresAt),
-            revokedAt: String(consent.revokedAt || '0'),
-            status: consent.status === 1 ? 'ACTIVE' : consent.status === 2 ? 'REVOKED' : 'NONE',
-          } as ConsentRecord);
+          if (consent.participant.toLowerCase() === connectedWallet.toLowerCase()) {
+            fetched.push({
+              consentId: String(i),
+              participant: consent.participant,
+              cviAttestationHash: consent.cviAttestationHash,
+              receiptId: consent.receiptId,
+              studyId: consent.studyId,
+              purposeHash: consent.purposeHash,
+              policyVersion: consent.policyVersion,
+              createdAt: String(consent.createdAt),
+              expiresAt: String(consent.expiresAt),
+              revokedAt: String(consent.revokedAt || '0'),
+              status: consent.status === 1 ? 'ACTIVE' : consent.status === 2 ? 'REVOKED' : 'NONE',
+            } as ConsentRecord);
+          }
         } catch {
           // Consent doesn't exist
         }
@@ -50,6 +53,10 @@ export function Participant() {
       console.error('Failed to fetch consents:', e);
     }
   }, [connectedWallet]);
+
+  useEffect(() => {
+    fetchConsents();
+  }, [fetchConsents]);
 
   const handleGenerateApass = useCallback(async () => {
     if (!connectedWallet) {
@@ -75,50 +82,54 @@ export function Participant() {
     }
     setCreating(true);
     try {
-      const contract = await getConsentRegistryContract(null);
-      // In demo mode, we create a mock consent record
-      // In production, this would call contract.createConsent with actual data
-      const newConsent: ConsentRecord = {
-        consentId: String(consents.length + 1),
-        participant: connectedWallet,
-        cviAttestationHash: '0x' + Math.random().toString(16).slice(2, 66),
-        receiptId: '0x' + Math.random().toString(16).slice(2, 66),
-        studyId: 'Study-001',
-        purposeHash: '0x' + Math.random().toString(16).slice(2, 66),
-        policyVersion: 'v1.0',
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-        revokedAt: '',
-        status: 'ACTIVE',
-      };
-      setConsents((prev) => [...prev, newConsent]);
-      addToast('Consent created successfully!', 'success');
-    } catch (e) {
-      addToast('Failed to create consent', 'error');
+      const wallet = (window as any).__wallet || null;
+      const contract = await getConsentRegistryContract(wallet);
+
+      // Generate real cryptographic hashes from actual user input
+      const cviAttestationHash = ethers.keccak256(ethers.toUtf8Bytes(`cvi-${connectedWallet}-${Date.now()}`));
+      const studyId = ethers.keccak256(ethers.toUtf8Bytes(studyIdInput));
+      const purposeHash = ethers.keccak256(ethers.toUtf8Bytes(purposeInput));
+      const policyVersion = ethers.encodeBytes32String('v1.0');
+      const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60); // 1 year
+      const receiptData = new Uint8Array(0);
+
+      const tx = await contract.createConsent(
+        cviAttestationHash,
+        studyId,
+        purposeHash,
+        policyVersion,
+        expiresAt,
+        receiptData
+      );
+      await tx.wait();
+      addToast('Consent created on-chain!', 'success');
+      fetchConsents();
+    } catch (e: any) {
+      addToast(`Failed to create consent: ${e.message || e}`, 'error');
     } finally {
       setCreating(false);
     }
-  }, [connectedWallet, consents.length, addToast]);
+  }, [connectedWallet, studyIdInput, purposeInput, addToast, fetchConsents]);
 
   const handleRevokeConsent = useCallback(async (consentId: string) => {
     setRevoking(consentId);
     try {
-      // In production, call contract.revokeConsent(consentId)
-      setConsents((prev) =>
-        prev.map((c) =>
-          c.consentId === consentId ? { ...c, status: 'REVOKED', revokedAt: new Date().toISOString() } : c
-        )
-      );
-      addToast('Consent revoked successfully', 'success');
-    } catch (e) {
-      addToast('Failed to revoke consent', 'error');
+      const wallet = (window as any).__wallet || null;
+      const contract = await getConsentRegistryContract(wallet);
+      const tx = await contract.revokeConsent(parseInt(consentId, 10));
+      await tx.wait();
+      addToast('Consent revoked on-chain', 'success');
+      fetchConsents();
+    } catch (e: any) {
+      addToast(`Failed to revoke consent: ${e.message || e}`, 'error');
     } finally {
       setRevoking(null);
     }
-  }, [addToast]);
+  }, [addToast, fetchConsents]);
 
-  const handleConnected = useCallback((wallet: string) => {
+  const handleConnected = useCallback((wallet: string, signer: any) => {
     setConnectedWallet(wallet);
+    (window as any).__wallet = signer;
   }, []);
 
   return (
@@ -173,14 +184,39 @@ export function Participant() {
           >
             {generating ? '⏳ Generating...' : '🪪'} Generate A-Pass
           </button>
-          <button
-            onClick={handleCreateConsent}
-            disabled={creating}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600/50 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-          >
-            {creating ? '⏳ Creating...' : '✅'} Create Consent
-          </button>
         </div>
+        {connectedWallet && (
+          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 space-y-4">
+            <h3 className="text-lg font-semibold text-white">Create Consent On-Chain</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-sm text-gray-400">Study ID</span>
+                <input
+                  type="text"
+                  value={studyIdInput}
+                  onChange={(e) => setStudyIdInput(e.target.value)}
+                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm text-gray-400">Purpose</span>
+                <input
+                  type="text"
+                  value={purposeInput}
+                  onChange={(e) => setPurposeInput(e.target.value)}
+                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                />
+              </label>
+            </div>
+            <button
+              onClick={handleCreateConsent}
+              disabled={creating}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600/50 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              {creating ? '⏳ Creating...' : '✅'} Create On-Chain
+            </button>
+          </div>
+        )}
       </div>
 
       {connectedWallet && (
