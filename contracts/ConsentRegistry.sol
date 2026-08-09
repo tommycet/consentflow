@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IConsentRegistry.sol";
 import "./interfaces/IContributionReceipt.sol";
@@ -10,7 +12,7 @@ import "./interfaces/IContributionReceipt.sol";
 /// @dev The real CCP enforcement (verify CVI is active) is done by the Cleanverse
 ///      verify_apass API. This contract enforces local consent/receipt state and
 ///      records an immutable audit trail.
-contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
+contract ConsentRegistry is IConsentRegistry, Ownable, Pausable, ReentrancyGuard {
     uint256 public _consentIds;
     uint256 public _requestIds;
 
@@ -43,7 +45,7 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
     error CompensationRefundFailed(uint256 requestId);
     error ArrayLengthMismatch();
 
-    constructor(address _contributionReceipt) {
+    constructor(address _contributionReceipt) Ownable(msg.sender) {
         if (_contributionReceipt == address(0)) revert InvalidAddress();
         contributionReceipt = IContributionReceipt(_contributionReceipt);
     }
@@ -58,7 +60,7 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         bytes32 policyVersion,
         uint64 expiresAt,
         bytes calldata /*receiptData*/
-    ) external override returns (uint256 consentId, uint256 receiptId) {
+    ) external override whenNotPaused returns (uint256 consentId, uint256 receiptId) {
         if (expiresAt <= block.timestamp) revert InvalidExpiry();
 
         _consentIds += 1;
@@ -127,7 +129,7 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         bytes32 studyId,
         bytes32 purposeHash,
         uint64 expiresAt
-    ) external payable override returns (uint256 requestId) {
+    ) external payable override whenNotPaused returns (uint256 requestId) {
         if (expiresAt <= block.timestamp) revert InvalidExpiry();
 
         Consent storage c = consents[consentId];
@@ -207,6 +209,18 @@ contract ConsentRegistry is IConsentRegistry, ReentrancyGuard {
         contributionReceipt.revoke(c.receiptId);
 
         emit ConsentExpired(consentId, c.participant);
+    }
+
+    // ── Emergency stop ─────────────────────────────────────────────
+
+    /// @notice Pause the registry to block new activity during emergencies.
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice Unpause the registry to restore normal activity.
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     // ── Internal ──────────────────────────────────────────────────

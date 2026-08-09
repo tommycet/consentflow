@@ -32,7 +32,7 @@ contract EndToEndLifecycleTest is Test {
         assertTrue(address(receipt) != address(0));
 
         // ── Step 2: Participant creates consent ──────────────────────
-        uint256 consentExpiry = uint64(block.timestamp + 30 days);
+        uint64 consentExpiry = uint64(block.timestamp + 30 days);
         vm.startPrank(participant);
         (uint256 consentId, uint256 receiptId) = registry.createConsent(
             keccak256("cvi"),
@@ -54,7 +54,7 @@ contract EndToEndLifecycleTest is Test {
 
         // ── Step 3: Researcher queues access request with compensation ─
         uint256 compensation = 0.05 ether;
-        uint256 requestExpiry = uint64(block.timestamp + 1 hours);
+        uint64 requestExpiry = uint64(block.timestamp + 1 hours);
         uint256 researcherBalanceBefore = address(researcher).balance;
 
         vm.prank(researcher);
@@ -90,7 +90,7 @@ contract EndToEndLifecycleTest is Test {
         );
 
         // ── Step 5: Researcher queues second request ─────────────────
-        uint256 requestExpiry2 = uint64(block.timestamp + 1 hours);
+        uint64 requestExpiry2 = uint64(block.timestamp + 1 hours);
         vm.prank(researcher);
         uint256 requestId2 = registry.queueAccessRequest{value: compensation}(
             consentId,
