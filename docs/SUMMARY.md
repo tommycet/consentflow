@@ -3,6 +3,27 @@
 ## Problem
 Clinical trials lack participant-controlled, revocable consent on-chain. Institutions cannot verify compliance in real-time. Current systems rely on paper trails or opaque databases that cannot prove whether a participant withdrew before data was accessed.
 
+## Deployed Addresses (Monad Testnet, Chain ID 10143)
+
+| Contract | Address |
+|----------|---------|
+| ConsentRegistry | `0xE64495D37859cF5fC0629023146764D5c01208c0` |
+| ContributionReceipt | `0x57EB95F57bBA38aABE9f29d26395BCA74Ab28c84` |
+
+**RPC:** `https://testnet-rpc.monad.xyz`
+**Deployer:** `0x2b1E48EFd0cfb9310Bf0dF777e87746a9B6b8d44`
+
+### Verified On-Chain Interactions
+1. `createConsent()` — tx `0xcc805661...` (consent #1, ACTIVE)
+2. `queueAccessRequest()` — tx `0x8632775e...` (request #1, 0.01 ETH compensation)
+3. `settleAccessRequest()` — tx `0xc5576a9d...` (APPROVED, compensation to participant)
+4. CVI generate → A-Pass status 1 (active), cvRecordId 2053
+5. CVI freeze → A-Pass status 2 → unified verify returns CVI_FAILED
+6. CVI unfreeze → A-Pass status 1 → unified verify returns VERIFIED
+7. CVA receipt #1 queried via on-chain contract (status ACTIVE)
+
+---
+
 ## Solution
 ConsentFlow is a patient-controlled consent rail built on the Cleanverse compliance stack. It turns revocation into a verifiable on-chain event and gives researchers an auditable settlement path that cannot proceed if consent has been withdrawn.
 
