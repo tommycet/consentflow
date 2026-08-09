@@ -125,6 +125,14 @@ async function run() {
     assert.strictEqual(r.body.success, false);
   });
 
+  // ═══ Unified Verification Endpoint ═══
+  console.log('\n── Unified Verification ──');
+  await test('GET /api/verify/1 returns error gracefully when contract not deployed', async () => {
+    const r = await httpRequest('GET', '/api/verify/1');
+    // Should not crash — returns either success with verdict or graceful error.
+    assert.ok(r.body.success === false || (r.body.success === true && r.body.data && 'overallVerdict' in r.body.data));
+  });
+
   // ═══ Validation ═══
   console.log('\n── Validation ──');
   await test('Invalid address on consents endpoint', async () => {

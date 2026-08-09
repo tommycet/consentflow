@@ -332,6 +332,137 @@ router.get(
 );
 
 // ---------------------------------------------------------------------------
+// GET /verify/:id
+// Unified on-chain consent + Cleanverse CVI + receipt validation.
+// ---------------------------------------------------------------------------
+router.get(
+  '/verify/:id',
+  wrap(async (req, res) => {
+    const cid = validateConsentId(req.params.id);
+    if (!cid.valid) return fail(res, cid.error);
+
+    const id = BigInt(cid.value);
+    const registry = getConsentRegistry();
+    const receiptContract = getContributionReceipt();
+    const atoken = config.defaultAtoken;
+
+    // 1. Read consent from on-chain.
+    let consent;
+    try {
+      consent = await registry.getConsent(id);
+    } catch (e) {
+      return fail(res, `Failed to read consent ${cid.value}: ${e.message}`, 503);
+    }
+
+    const consentId = Number(consent[0]);
+    const participant = consent[1];
+    const studyId = consent[4];
+    const purposeHash = consent[5];
+    const receiptId = Number(consent[3]);
+
+    // 2. Check consent existence.
+    if (consentId === 0) {
+      return fail(res, `Consent ${cid.value} not found`, 404);
+    }
+
+    // 3. Get dynamic consent status (handles expiry automatically).
+    let consentStatus = 'ACTIVE';
+    try {
+      const dynamicStatus = await registry.consentStatus(id);
+      const statusNum = Number(dynamicStatus);
+      if (statusNum === 2) consentStatus = 'REVOKED';
+      else if (statusNum === 3) consentStatus = 'EXPIRED';
+      else if (statusNum === 0) consentStatus = 'NONE';
+    } catch (e) {
+      // Fallback to raw struct status if consentStatus reverts.
+      const rawStatus = Number(consent[10]);
+      if (rawStatus === 2) consentStatus = 'REVOKED';
+      else if (rawStatus === 3) consentStatus = 'EXPIRED';
+      else if (rawStatus === 0) consentStatus = 'NONE';
+    }
+
+    if (consentStatus === 'NONE') {
+      return fail(res, `Consent ${cid.value} not found`, 404);
+    }
+
+    // 4. Check ContributionReceipt validity.
+    let receiptValid = false;
+    try {
+      receiptValid = await receiptContract.isValid(BigInt(receiptId));
+    } catch (e) {
+      receiptValid = false;
+    }
+
+    // 5. Call Cleanverse verify_apass for CVI compliance.
+    let cviCompliant = false;
+    let aPassStatus = null;
+    try {
+      const verifyResult = await postPlain('/verify_apass', {
+        chain: config.chain,
+        atoken,
+        address: participant,
+      });
+      if (verifyResult.code === '0000' && verifyResult.data) {
+        const vcode = verifyResult.data.code ?? verifyResult.data.status;
+        cviCompliant = vcode === 4;
+        aPassStatus = vcode;
+      }
+    } catch (e) {
+      cviCompliant = false;
+    }
+
+    // 6. Call Cleanverse query_apass for A-Pass details.
+    let tier = null;
+    let countries = [];
+    try {
+      const queryResult = await postPlain('/query_apass', {
+        chain: config.chain,
+        address: participant,
+      });
+      if (queryResult.code === '0000' && queryResult.data) {
+        tier = queryResult.data.tier || null;
+        countries = Array.isArray(queryResult.data.countries) ? queryResult.data.countries : [];
+        // Infer from query if verify wasn't conclusive.
+        if (aPassStatus === null && queryResult.data.status !== undefined) {
+          aPassStatus = queryResult.data.status;
+          cviCompliant = queryResult.data.status === 1;
+        }
+      }
+    } catch (e) {
+      // Cleanverse API down — leave defaults.
+    }
+
+    // 7. Determine overall verdict.
+    let overallVerdict = 'VERIFIED';
+    if (consentStatus === 'REVOKED') {
+      overallVerdict = 'CONSENT_REVOKED';
+    } else if (consentStatus === 'EXPIRED') {
+      overallVerdict = 'CONSENT_EXPIRED';
+    } else if (!receiptValid) {
+      overallVerdict = 'RECEIPT_INVALID';
+    } else if (!cviCompliant) {
+      overallVerdict = 'CVI_FAILED';
+    }
+
+    return ok(res, {
+      consentId,
+      participant,
+      studyId,
+      purposeHash,
+      consentStatus,
+      receiptValid,
+      cviStatus: {
+        compliant: cviCompliant,
+        aPassStatus,
+        tier,
+        countries,
+      },
+      overallVerdict,
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
 // GET /events
 // Query params: ?type=ConsentCreated&participant=0x...&consentId=1
 // ---------------------------------------------------------------------------
